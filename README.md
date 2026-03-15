@@ -4,19 +4,22 @@ DEWDROP VALLEY
 A Cozy Pixel Art RPG Adventure
 
 Game Design Document  •  Version 1.0
-2025
+2026
 
 
 
 1. Game Overview
-Title	Dewdrop Valley
-Genre	Cozy Top-Down Pixel Art RPG / Adventure
-Platform	PC (Windows/Mac), Mobile (iOS/Android)
-Engine	Godot 4 (or Unity 2D)
-Art Style	8-bit / 16-bit pixel art, warm earthy palette
-Target Audience	Ages 13+, fans of Stardew Valley, Spiritfarer, Undertale
-Tone	Warm, wholesome, quietly emotional
-Scope	8–12 hours main story; 20+ hours full completion
+
+| Attribute | Details |
+|-----------|----------|
+| Title | Dewdrop Valley |
+| Genre | Cozy Top-Down Pixel Art RPG / Adventure |
+| Platform | PC (Windows/Mac), Mobile (iOS/Android) |
+| Engine | Godot 4 (or Unity 2D) |
+| Art Style | 8-bit / 16-bit pixel art, warm earthy palette |
+| Target Audience | Ages 13+, fans of Stardew Valley, Spiritfader, Undertale |
+| Tone | Warm, wholesome, quietly emotional |
+| Scope | 8–12 hours main story; 20+ hours full completion |
 
 Elevator Pitch
 Dewdrop Valley is a cozy top-down pixel art RPG where you inherit a crumbling cottage in a sleepy village and slowly bring it — and its eccentric residents — back to life. No combat. No timers. Just exploration, relationships, and the gentle mystery of why everyone seems to be hiding something warm.
@@ -69,12 +72,14 @@ Player Character
 Customisable name, pronouns, skin tone, hair colour. Backstory is urban burnout; personality shaped by player choices over the game.
 
 Key NPCs
-Name	Role	Description
-Bramble	Herbalist	Elderly, gruff but deeply kind. Tends the forest path and holds secrets about Mira.
-Sol	Lighthouse Keeper	Young, anxious, hasn't left the lighthouse in months. Loves astronomy.
-Clem & Rue	Baker siblings	Bickering twins who haven't spoken properly in years — the heart of the old feud.
-Wren	Travelling Artist	Arrives mid-game; nomadic, wise, becomes a close confidant.
-Elder Moss	Village Elder	Ancient, gentle, speaks in riddles. Knows everything about the valley's past.
+
+| Name | Role | Description |
+|------|------|-------------|
+| Bramble | Herbalist | Elderly, gruff but deeply kind. Tends the forest path and holds secrets about Mira. |
+| Sol | Lighthouse Keeper | Young, anxious, hasn't left the lighthouse in months. Loves astronomy. |
+| Clem & Rue | Baker siblings | Bickering twins who haven't spoken properly in years — the heart of the old feud. |
+| Wren | Travelling Artist | Arrives mid-game; nomadic, wise, becomes a close confidant. |
+| Elder Moss | Village Elder | Ancient, gentle, speaks in riddles. Knows everything about the valley's past. |
 
 5. Art & Audio Direction
 Visual Style
@@ -93,17 +98,23 @@ Audio
 
 6. Monetisation & Release
 Business Model
-Price	$14.99 base game (PC) / $6.99 mobile
-DLC	Optional seasonal content packs (new festivals, NPCs)
-No Ads	True premium experience — no ads, no energy timers
-Demo	Free demo covering Day 1–3
+
+| Category | Details |
+|----------|----------|
+| Price | $14.99 base game (PC) / $6.99 mobile |
+| DLC | Optional seasonal content packs (new festivals, NPCs) |
+| No Ads | True premium experience — no ads, no energy timers |
+| Demo | Free demo covering Day 1–3 |
 
 Release Milestones
-Prototype	Week 4 — playable vertical slice (village + 2 NPCs)
-Alpha	Month 3 — Act 1 complete, all systems in place
-Beta	Month 6 — full story, polish pass
-Launch	Month 9 — PC launch
-Mobile	Month 12 — iOS/Android port
+
+| Milestone | Timeline |
+|-----------|----------|
+| Prototype | Week 4 — playable vertical slice (village + 2 NPCs) |
+| Alpha | Month 3 — Act 1 complete, all systems in place |
+| Beta | Month 6 — full story, polish pass |
+| Launch | Month 9 — PC launch |
+| Mobile | Month 12 — iOS/Android port |
 
 7. Technical Notes
 Engine & Tools
