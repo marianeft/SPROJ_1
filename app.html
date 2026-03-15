@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🌿 Dewdrop Valley</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#1a120a;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  height:100vh;overflow:hidden;font-family:'Courier New',monospace;
+}
+
+/* ── Title ── */
+#title-screen{display:flex;flex-direction:column;align-items:center;gap:14px;color:#c8a97a;}
+#title-screen h1{font-size:38px;color:#e8d5a3;letter-spacing:4px;text-shadow:0 0 20px #a8d8b940,3px 3px 0 #3a2810;}
+.sub{font-size:12px;color:#8ab89a;letter-spacing:2px;}
+.start-btn{margin-top:10px;padding:11px 28px;background:#3a6b4a;border:2px solid #6bae8a;color:#e8f5ee;font-size:13px;cursor:pointer;letter-spacing:2px;font-family:'Courier New',monospace;transition:background .2s,transform .2s;}
+.start-btn:hover{background:#4a8a5a;transform:scale(1.05);}
+.blink{animation:blink 1.2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Game ── */
+#game-wrap{display:none;flex-direction:column;align-items:center;gap:4px;}
+
+/* ── HUD ── */
+#hud{width:640px;display:flex;justify-content:space-between;align-items:center;padding:2px 8px;font-size:11px;color:#c8a97a;}
+#hud-day{color:#8ab89a;font-weight:bold;}
+#stamina-wrap{display:none;align-items:center;gap:5px;font-size:10px;color:#aac8aa;}
+#stamina-bar-bg{width:60px;height:6px;background:#1a2a1a;border:1px solid #3a5a3a;border-radius:2px;}
+#stamina-bar{height:100%;width:100%;background:#6bae8a;border-radius:2px;transition:width .1s,background .2s;}
+#hud-loc{color:#c8a97a;font-size:10px;}
+#hud-heart{color:#e08080;letter-spacing:1px;}
+
+/* ── Canvas ── */
+canvas{display:block;border:3px solid #3a2810;image-rendering:pixelated;box-shadow:0 0 40px #0006,0 0 80px #a8d8b910;}
+
+/* ── Minimap ── */
+#minimap{position:absolute;top:6px;right:6px;width:100px;height:75px;border:2px solid #4a3a2a;background:#1a120a;image-rendering:pixelated;}
+
+/* ── Sign board ── */
+#sign-wrap{display:none;position:absolute;bottom:62px;left:50%;transform:translateX(-50%);width:590px;background:#1a100a;border:3px solid #6bae8a;padding:12px 16px;z-index:9;box-shadow:0 0 30px #000a;pointer-events:none;}
+#sign-speaker{color:#8ab89a;font-weight:bold;font-size:13px;margin-bottom:4px;}
+#sign-text{color:#e8d5a3;font-size:12px;line-height:1.75;}
+
+/* ── Dialogue ── */
+#dlg-wrap{display:none;position:absolute;bottom:62px;left:50%;transform:translateX(-50%);width:590px;background:#1a100a;border:3px solid #6bae8a;padding:12px 16px;z-index:10;box-shadow:0 0 30px #000a;pointer-events:none;}
+#dlg-speaker{color:#8ab89a;font-weight:bold;font-size:13px;margin-bottom:4px;}
+#dlg-text{color:#e8d5a3;font-size:12px;line-height:1.75;}
+#dlg-prompt{margin-top:7px;color:#6bae8a;font-size:10px;text-align:right;animation:blink 1.2s infinite;}
+
+/* ── Choices ── */
+#choice-wrap{display:none;position:absolute;bottom:62px;left:50%;transform:translateX(-50%);width:590px;background:#1a100a;border:3px solid #6bae8a;padding:8px 14px;z-index:10;box-shadow:0 0 30px #000a;}
+#choice-hint{color:#3a5a3a;font-size:9px;text-align:right;margin-top:4px;letter-spacing:1px;}
+.choice-item{color:#e8d5a3;font-size:12px;padding:7px 10px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;}
+.choice-item:hover{border-left-color:#6bae8a;color:#a8d8b9;background:#2a1a0a;}
+.choice-item.selected{border-left-color:#6bae8a;color:#a8d8b9;background:#1a2a1a;}
+
+/* ── Notification ── */
+#notif{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:#1e301e;border:2px solid #6bae8a;color:#a8d8b9;padding:5px 14px;font-size:11px;opacity:0;transition:opacity .4s;pointer-events:none;z-index:20;white-space:nowrap;}
+
+/* ── Quest Panel ── */
+#quest-panel{
+  display:none;position:absolute;top:0;left:0;width:640px;height:480px;
+  background:rgba(14,9,4,0.96);border:3px solid #6bae8a;z-index:30;
+  flex-direction:column;padding:16px 20px;gap:10px;overflow:hidden;
+}
+#quest-panel h2{color:#8ab89a;font-size:16px;letter-spacing:2px;border-bottom:1px solid #3a5a3a;padding-bottom:8px;}
+#quest-tabs{display:flex;gap:6px;}
+.qtab{padding:5px 14px;background:#2a1a0a;border:1px solid #4a3a2a;color:#8a7a6a;font-size:11px;cursor:pointer;font-family:'Courier New',monospace;}
+.qtab.active{border-color:#6bae8a;color:#a8d8b9;background:#1a2a1a;}
+#quest-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px;}
+#quest-list::-webkit-scrollbar{width:4px;}
+#quest-list::-webkit-scrollbar-track{background:#1a100a;}
+#quest-list::-webkit-scrollbar-thumb{background:#3a5a3a;}
+.qcard{background:#1e140a;border:1px solid #3a2a1a;padding:10px 13px;border-radius:2px;}
+.qcard.active-q{border-color:#6bae8a;}
+.qcard.done-q{border-color:#4a6a3a;opacity:0.7;}
+.qcard-title{color:#e8d5a3;font-size:12px;font-weight:bold;margin-bottom:4px;}
+.qcard-title span{font-size:10px;margin-left:8px;}
+.qcard-title .tag-active{color:#8ae8a8;}
+.qcard-title .tag-done{color:#6aaa6a;}
+.qcard-title .tag-locked{color:#5a4a3a;}
+.qcard-desc{color:#9a8a6a;font-size:11px;line-height:1.6;margin-bottom:6px;}
+.qcard-steps{display:flex;flex-direction:column;gap:3px;}
+.qstep{font-size:11px;color:#6a7a6a;padding-left:12px;}
+.qstep.done{color:#5a8a5a;text-decoration:line-through;}
+.qstep.current{color:#a8d8b9;}
+#inv-section{display:flex;flex-direction:column;gap:8px;}
+#inv-section h3{color:#8ab89a;font-size:13px;}
+#inv-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.inv-item{background:#1e140a;border:1px solid #3a2a1a;padding:8px 10px;font-size:12px;color:#c8a97a;min-width:110px;max-width:160px;text-align:center;line-height:1.6;}
+.inv-item .qty{color:#6bae8a;font-weight:bold;}
+#close-quest{position:absolute;top:14px;right:16px;color:#5a4a3a;cursor:pointer;font-size:12px;}
+#close-quest:hover{color:#a8d8b9;}
+
+/* ── Item pickup flash ── */
+#item-flash{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a2a1a;border:2px solid #6bae8a;color:#a8d8b9;padding:8px 18px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:25;}
+
+/* ── Hurt flash ── */
+#hurt-flash{position:absolute;inset:0;background:rgba(220,40,40,0);pointer-events:none;z-index:15;transition:background 0.1s;}
+/* ── Festival End Screen ── */
+#end-screen{
+  display:none;position:absolute;inset:0;
+  background:rgba(8,4,2,0.92);
+  align-items:center;justify-content:center;z-index:60;
+  flex-direction:column;gap:0;
+}
+#end-box{
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  padding:36px 52px;background:#120a04;
+  border:3px solid #f0c040;box-shadow:0 0 60px #f0c04040,0 0 20px #000c;
+  max-width:480px;text-align:center;
+}
+#end-box h2{color:#f0c040;font-size:22px;letter-spacing:3px;text-shadow:0 0 20px #f0c04080;}
+#end-box .end-sub{color:#c8a97a;font-size:11px;letter-spacing:2px;margin-top:-6px;}
+#end-box .end-body{color:#e8d5a3;font-size:12px;line-height:1.9;margin:6px 0;}
+#end-box .end-name{color:#8ab89a;font-size:14px;font-weight:bold;}
+#end-restart{margin-top:6px;padding:11px 32px;background:#3a5a1a;border:2px solid #f0c040;color:#f0e8a0;font-size:13px;cursor:pointer;letter-spacing:2px;font-family:'Courier New',monospace;transition:background .2s;}
+#end-restart:hover{background:#5a8a2a;}
+#end-close{color:#5a4a3a;font-size:10px;cursor:pointer;letter-spacing:1px;margin-top:-4px;}
+#end-close:hover{color:#8ab89a;}
+
+/* ── Hint ── */
+#hint{color:#3a2e20;font-size:10px;letter-spacing:1px;margin-top:1px;}
+
+/* ── Name Prompt overlay (over title) ── */
+#name-prompt{
+  display:none;position:fixed;inset:0;
+  background:rgba(10,6,2,0.92);
+  align-items:center;justify-content:center;z-index:100;
+}
+#name-box{
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+  padding:34px 44px;background:#1a100a;
+  border:3px solid #6bae8a;box-shadow:0 0 40px #0009;
+}
+#name-box h2{color:#8ab89a;font-size:16px;letter-spacing:2px;}
+#name-box p{color:#7a6a5a;font-size:11px;}
+#name-input{
+  background:#0e0902;border:2px solid #4a6a4a;color:#e8d5a3;
+  font-family:'Courier New',monospace;font-size:16px;letter-spacing:2px;
+  padding:9px 16px;width:240px;text-align:center;outline:none;
+}
+#name-input:focus{border-color:#6bae8a;}
+#name-confirm{
+  padding:9px 28px;background:#3a6b4a;border:2px solid #6bae8a;
+  color:#e8f5ee;font-size:13px;cursor:pointer;letter-spacing:2px;
+  font-family:'Courier New',monospace;transition:background .2s;
+}
+#name-confirm:hover{background:#4a8a5a;}
+
+/* ── ESC / Pause Menu ── */
+#esc-menu{
+  display:none;position:absolute;inset:0;
+  background:rgba(10,6,2,0.94);
+  align-items:center;justify-content:center;z-index:50;
+}
+#esc-box{
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  padding:30px 44px;background:#1a100a;
+  border:3px solid #6bae8a;box-shadow:0 0 40px #000c;min-width:280px;
+}
+#esc-box h2{color:#8ab89a;font-size:15px;letter-spacing:2px;border-bottom:1px solid #2a3a2a;padding-bottom:10px;width:100%;text-align:center;}
+.menu-btn{
+  width:100%;padding:9px 0;background:#1e150a;border:1px solid #4a3a2a;
+  color:#c8a97a;font-size:12px;cursor:pointer;letter-spacing:1px;
+  font-family:'Courier New',monospace;transition:all .15s;text-align:center;
+}
+.menu-btn:hover{border-color:#6bae8a;color:#a8d8b9;background:#2a1a0a;}
+.menu-btn.danger{border-color:#6a3a2a;color:#c87a5a;}
+.menu-btn.danger:hover{border-color:#aa5a3a;color:#e8a080;background:#2a1008;}
+
+/* ── Volume row ── */
+#vol-row{display:flex;align-items:center;gap:12px;width:100%;}
+#vol-row label{color:#7a6a5a;font-size:11px;flex:0 0 auto;}
+#vol-slider{flex:1;accent-color:#6bae8a;cursor:pointer;}
+#vol-pct{color:#6bae8a;font-size:11px;width:32px;text-align:right;}
+#mute-btn{padding:5px 10px;background:#1e150a;border:1px solid #4a3a2a;color:#c8a97a;font-size:11px;cursor:pointer;font-family:'Courier New',monospace;}
+#mute-btn:hover{border-color:#6bae8a;color:#a8d8b9;}
+#mute-btn.muted{border-color:#8a3a2a;color:#c87a5a;}
+
+/* ── ESC hint in HUD ── */
+#hud-esc{color:#3a2e20;font-size:10px;cursor:pointer;}
+#hud-esc:hover{color:#6bae8a;}
+</style>
+</head>
+<body>
+
+<!-- Name Prompt (shown before game starts) -->
+<div id="name-prompt" style="display:none">
+  <div id="name-box">
+    <h2>&#127807; DEWDROP VALLEY</h2>
+    <p>What shall the valley call you?</p>
+    <input id="name-input" type="text" maxlength="16" placeholder="Your name..." autocomplete="off" />
+    <button id="name-confirm">&#9654;&nbsp; ENTER THE VALLEY</button>
+    <div style="font-size:10px;color:#3a2a1a">Press Enter or click the button</div>
+  </div>
+</div>
+
+<!-- Title -->
+<div id="title-screen">
+  <div style="font-size:46px">&#127807;</div>
+  <h1>DEWDROP VALLEY</h1>
+  <div class="sub">A COZY PIXEL ART RPG</div>
+  <div style="font-size:10px;color:#6a8060;letter-spacing:1px">Quest Edition</div>
+  <button class="start-btn blink" id="start-btn">&#9654;&nbsp; BEGIN YOUR JOURNEY</button>
+  <div style="font-size:10px;color:#4a3a2a">WASD/Arrows Move &nbsp;&middot;&nbsp; E Interact &nbsp;&middot;&nbsp; Q Journal &nbsp;&middot;&nbsp; ESC Menu</div>
+</div>
+
+<!-- Game -->
+<div id="game-wrap">
+  <div id="hud">
+    <span id="hud-day">Day 1</span>
+    <div id="stamina-wrap">
+      <span>&#9971;</span>
+      <div id="stamina-bar-bg"><div id="stamina-bar"></div></div>
+      <span id="stamina-txt">100%</span>
+    </div>
+    <span id="hud-loc">Village Square</span>
+    <span id="hud-heart">&#9829;&#9829;&#9829;</span>
+    <span id="hud-esc" title="Menu (ESC)">&#9776; MENU</span>
+  </div>
+  <div style="position:relative">
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <canvas id="minimap" width="100" height="75"></canvas>
+
+    <!-- Quest Journal Panel -->
+    <div id="quest-panel">
+      <span id="close-quest">[ close &mdash; Q ]</span>
+      <h2>&#128214; Journal &amp; Quests</h2>
+      <div id="quest-tabs">
+        <div class="qtab active" id="tab-quests">Quests</div>
+        <div class="qtab" id="tab-inventory">Inventory</div>
+      </div>
+      <div id="quest-list"></div>
+      <div id="inv-section" style="display:none">
+        <h3>Your Inventory</h3>
+        <div id="inv-grid"></div>
+      </div>
+    </div>
+
+    <!-- Sign board — same dialogue-box style, shown on sign proximity -->
+    <div id="sign-wrap">
+      <div id="sign-speaker"></div>
+      <div id="sign-text"></div>
+    </div>
+
+    <div id="dlg-wrap">
+      <div id="dlg-speaker"></div>
+      <div id="dlg-text"></div>
+      <div id="dlg-prompt">[ E to continue ]</div>
+    </div>
+    <div id="choice-wrap"><div id="choice-hint">&#8593;&#8595; Navigate &nbsp;&middot;&nbsp; E / Enter Select</div></div>
+    <div id="notif"></div>
+    <div id="end-screen">
+      <div id="end-box">
+        <div style="font-size:48px">&#127982;</div>
+        <h2>LANTERN NIGHT RETURNS</h2>
+        <div class="end-sub">&#10022; THE VALLEY IS WHOLE AGAIN &#10022;</div>
+        <div class="end-body" id="end-body-text">
+          The Great Lantern blazes over Dewdrop Valley once more.<br>
+          The night sky glows with a warmth that has been absent for ten years.<br><br>
+          Every soul in the valley gathers at the square &mdash; laughing,<br>
+          dancing, remembering. <em>Mira would have loved this.</em><br><br>
+          <span class="end-name" id="end-player-name"></span>, your journey here<br>
+          has changed everything.
+        </div>
+        <button id="end-restart">&#8635;&nbsp; PLAY AGAIN</button>
+        <div id="end-close">[ Continue exploring ]</div>
+      </div>
+    </div>
+    <div id="hurt-flash"></div>
+    <div id="item-flash"></div>
+  </div>
+  <div id="hint">WASD/Arrows Move &nbsp;&middot;&nbsp; E Talk/Interact &nbsp;&middot;&nbsp; Q Journal &nbsp;&middot;&nbsp; ESC Menu &nbsp;&middot;&nbsp; Walk over items to pick up</div>
+</div>
+
+<!-- ESC / Pause Menu (inside game-wrap canvas area) -->
+<div id="esc-menu" style="display:none">
+  <div id="esc-box">
+    <h2>&#9776;&nbsp; MENU</h2>
+    <div id="vol-row">
+      <label>&#9834; Music</label>
+      <input id="vol-slider" type="range" min="0" max="100" value="40" />
+      <span id="vol-pct">40%</span>
+      <button id="mute-btn">Mute</button>
+    </div>
+    <button class="menu-btn" id="btn-resume">&#9654;&nbsp; Resume Game</button>
+    <button class="menu-btn" id="btn-restart">&#8635;&nbsp; Restart</button>
+    <button class="menu-btn danger" id="btn-mainmenu">&#8962;&nbsp; Main Menu</button>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+// ══════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════
+var TILE=16, COLS=80, ROWS=60, CW=640, CH=480, SPEED=2, DAY_FRAMES=3600;
+function tp(t){return t*TILE;}
+
+// ══════════════════════════════════════════════
+//  PALETTE
+// ══════════════════════════════════════════════
+var P={
+  grass:'#6aaa6a',grassD:'#5a9a5a',grassM:'#4a8a4a',
+  path:'#c8a97a',water:'#5a8aaa',waterL:'#7aaaca',
+  sand:'#d4c090',tree:'#3a6a3a',treeL:'#4a7a4a',trunk:'#6a4a2a',
+  pine:'#2a5a2a',pineD:'#1a4a1a',
+  mountain:'#8a8a8a',mountainL:'#aaaaaa',snow:'#e8e8f0',
+  wallA:'#e8b89a',roofA:'#c87a5a',roofA2:'#aa6a5a',
+  wallB:'#b8d898',roofB:'#5a8a4a',roofB2:'#7aaa5a',
+  wallP:'#d4b89a',roofP:'#8a5a3a',roofP2:'#aa7a5a',
+  wallC:'#d8c8a8',roofC:'#6a5a3a',roofC2:'#8a7a5a',
+  wallL:'#c8d8e8',roofL:'#4a6a8a',roofL2:'#6a8aaa',
+  door:'#6a3a1a',win:'#8ac8d8',
+  fence:'#8a6a3a',well:'#7a5a3a',
+  fl1:'#e88a6a',fl2:'#e8c86a',fl3:'#c86ae8',fl4:'#6ae8c8',
+  sign:'#a87a4a',ruin:'#8a7a6a',ruinD:'#6a5a4a',
+  farmSoil:'#8a6040',crop:'#90c840',bridge:'#a08050',
+  shadow:'rgba(0,0,0,0.22)',
+  player:'#e8d5a3',pHair:'#5a3a1a',pShirt:'#5a8a9a'
+};
+
+// ══════════════════════════════════════════════
+//  MAP BUILD
+// ══════════════════════════════════════════════
+var MAP=[];
+for(var r=0;r<ROWS;r++){var _row=[];for(var c=0;c<COLS;c++)_row.push(0);MAP.push(_row);}
+
+(function buildMap(){
+  var r,c;
+  // Forest top
+  for(r=0;r<11;r++)for(c=0;c<COLS;c++)MAP[r][c]=11;
+  for(r=0;r<9;r++)for(c=0;c<COLS;c++)if(Math.random()<0.45)MAP[r][c]=15;
+  // Forest lake
+  for(r=3;r<9;r++)for(c=30;c<50;c++)MAP[r][c]=22;
+  for(c=28;c<52;c++){MAP[2][c]=11;MAP[9][c]=11;}
+  for(r=3;r<9;r++){MAP[r][28]=11;MAP[r][51]=11;}
+  // Forest paths
+  for(r=0;r<12;r++){MAP[r][19]=1;MAP[r][20]=1;}
+  for(r=0;r<12;r++){MAP[r][59]=1;MAP[r][60]=1;}
+  for(c=18;c<25;c++)MAP[10][c]=1;
+  // Village paths
+  for(r=10;r<45;r++){MAP[r][19]=1;MAP[r][20]=1;}
+  for(c=5;c<75;c++){MAP[22][c]=1;MAP[23][c]=1;}
+  // Square
+  for(r=18;r<29;r++)for(c=17;c<25;c++)MAP[r][c]=1;
+  MAP[23][21]=4; MAP[20][17]=10;
+  // Houses
+  for(r=13;r<17;r++)for(c=6;c<12;c++)MAP[r][c]=3;
+  for(r=13;r<17;r++)for(c=28;c<34;c++)MAP[r][c]=7;
+  for(r=30;r<35;r++)for(c=17;c<25;c++)MAP[r][c]=8;
+  for(c=5;c<17;c++)MAP[12][c]=6;
+  for(c=25;c<35;c++)MAP[12][c]=6;
+  // Flowers
+  [[11,4],[11,16],[11,25],[15,14],[15,25],[26,8],[26,30],[32,14],[32,28],[18,8],[18,30],[28,5],[28,32]]
+    .forEach(function(p){MAP[p[0]][p[1]]=9;});
+  // Farm
+  for(r=18;r<40;r++)for(c=45;c<73;c++)MAP[r][c]=17;
+  for(r=19;r<39;r+=3)for(c=46;c<72;c++)MAP[r][c]=18;
+  for(r=15;r<19;r++)for(c=50;c<56;c++)MAP[r][c]=20;
+  for(r=18;r<41;r++){MAP[r][44]=1;MAP[r][45]=1;}
+  for(c=44;c<73;c++)MAP[40][c]=1;
+  for(c=44;c<73;c++){MAP[14][c]=6;MAP[41][c]=6;}
+  for(r=14;r<42;r++){MAP[r][43]=6;MAP[r][73]=6;}
+  [[17,44],[17,56],[41,44],[41,60]].forEach(function(p){MAP[p[0]][p[1]]=9;});
+  // ── Mountain zone ──
+  // Base mountain tiles
+  for(r=0;r<23;r++)for(c=62;c<COLS;c++)MAP[r][c]=12;
+  // Snow caps on upper portion
+  for(r=0;r<12;r++)for(c=70;c<COLS;c++)MAP[r][c]=13;
+  for(r=0;r<8;r++) for(c=66;c<COLS;c++)MAP[r][c]=13;
+  // ── Continuous 2-tile-wide mountain path from entry (row 22, col 62-63)
+  //    up to the snow peak via a proper switchback trail ──
+  // Segment 1: Enter from east road → climb north along col 62-63 (rows 10-22)
+  for(r=10;r<23;r++){MAP[r][62]=24;MAP[r][63]=24;}
+  // Segment 2: First switchback west→east across rows 9-10 (cols 62-68)
+  for(c=62;c<69;c++){MAP[9][c]=24;MAP[10][c]=24;}
+  // Segment 3: Climb north along col 68-69 (rows 5-10)
+  for(r=5;r<11;r++){MAP[r][68]=24;MAP[r][69]=24;}
+  // Segment 4: Second switchback west→east rows 5-6 (cols 68-74)
+  for(c=68;c<75;c++){MAP[5][c]=24;MAP[6][c]=24;}
+  // Segment 5: Final climb north col 74-75 (rows 0-6)
+  for(r=0;r<7;r++){MAP[r][74]=24;MAP[r][75]=24;}
+  // Segment 6: Summit plateau row 0-1 cols 72-77
+  for(c=72;c<78;c++){MAP[0][c]=24;MAP[1][c]=24;}
+  // Alpine flowers along path
+  [[11,64],[11,69],[8,68],[7,72],[3,74]].forEach(function(p){
+    if(p[0]>=0&&p[0]<ROWS&&p[1]>=0&&p[1]<COLS) MAP[p[0]][p[1]]=23;
+  });
+  // Lighthouse
+  for(r=0;r<13;r++)for(c=0;c<8;c++)MAP[r][c]=11;
+  for(r=2;r<10;r++)for(c=2;c<7;c++)MAP[r][c]=21;
+  for(r=8;r<13;r++)MAP[r][7]=1;
+  for(c=7;c<20;c++)MAP[12][c]=1;
+  // Ruins
+  for(r=38;r<53;r++)for(c=5;c<21;c++)MAP[r][c]=25;
+  [[39,7],[39,8],[39,15],[39,16],[40,7],[40,16],[48,7],[48,16],
+   [49,7],[49,8],[49,15],[49,16],[43,10],[43,13],[44,10],[44,13]]
+    .forEach(function(p){MAP[p[0]][p[1]]=16;});
+  for(r=38;r<53;r++){MAP[r][4]=1;MAP[r][5]=1;}
+  for(c=4;c<22;c++)MAP[44][c]=1;
+  [[40,9],[40,12],[42,8],[42,15],[46,9],[46,14],[50,10],[50,13]]
+    .forEach(function(p){MAP[p[0]][p[1]]=23;});
+  // Beach
+  for(r=55;r<ROWS;r++)for(c=0;c<COLS;c++)MAP[r][c]=5;
+  for(r=53;r<56;r++)for(c=0;c<COLS;c++)MAP[r][c]=14;
+  for(c=0;c<COLS;c++)MAP[52][c]=1;
+  [[54,10],[54,25],[54,40],[54,55]].forEach(function(p){MAP[p[0]][p[1]]=9;});
+  // River + bridges
+  for(r=44;r<53;r++)for(c=22;c<28;c++)MAP[r][c]=5;
+  for(c=22;c<28;c++){MAP[44][c]=19;MAP[52][c]=19;}
+  // Market
+  for(r=24;r<31;r++)for(c=40;c<59;c++)MAP[r][c]=1;
+  for(r=25;r<30;r++)MAP[r][39]=1;
+  MAP[24][40]=10;
+})();
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+var gameRunning=false;
+var player={x:tp(20),y:tp(24),facing:'down',frame:0,frameTimer:0,_exhaustTimer:0};
+var keys={},interactPressed=false,journalPressed=false;
+var selectedChoice=0; // keyboard-highlighted choice index
+var day=1,timeOfDay='Morning',dayTick=0;
+var animTick=0,notifTimer=0,itemFlashTimer=0,cooldown=0,sleeping=false;
+var journalOpen=false,journalTab='quests';
+var escOpen=false,muted=false,volLevel=0.40;
+var playerName='Traveller';
+var loopStarted=false;
+var stamina=100, staminaMax=100; // climbing drains stamina
+var health=3, healthMax=3;      // hearts — lost when exhausted on mountain
+var hurtTimer=0;                  // red flash timer when taking damage
+var rel={Bramble:0,Elder:0,Sol:0,Clem:0,Rue:0,Wren:0,Pebble:0};
+var letterDelivered=false; // true after Elder Moss accepts Mira's old letter
+var festivalActive=false;   // true when q_lantern is done — lights the big lantern
+var signTooltipTimer=0;     // frames to show sign tooltip
+var signTooltipText='';     // current sign tooltip content
+var signTooltip=[];         // current sign lines
+var dlg=null;
+// ── Livestock ──
+var LIVESTOCK=[
+  {type:'chicken',x:tp(50),y:tp(21),dx:0,dy:0,timer:0,frame:0},
+  {type:'chicken',x:tp(54),y:tp(24),dx:0,dy:0,timer:0,frame:0},
+  {type:'chicken',x:tp(58),y:tp(22),dx:0,dy:0,timer:0,frame:0},
+  {type:'cow',    x:tp(48),y:tp(29),dx:0,dy:0,timer:0,frame:0},
+  {type:'cow',    x:tp(56),y:tp(31),dx:0,dy:0,timer:0,frame:0}
+];
+// ── Harvestable crops ──
+var CROP_TILES=[]; // populated by buildCropTiles()
+var cropHarvestCooldown=0;
+function buildCropTiles(){
+  CROP_TILES=[];
+  for(var r=19;r<39;r+=3)for(var c=46;c<72;c+=4){
+    CROP_TILES.push({col:c,row:r,grown:true,timer:0});
+  }
+}
+
+// ══════════════════════════════════════════════
+//  INVENTORY  { itemId: count }
+// ══════════════════════════════════════════════
+var INV={};
+var ITEMS={
+  cloudberry:{name:'Cloudberry',icon:'&#127826;',desc:'Alpine berries. Bramble wants these.'},
+  driftwood:  {name:'Driftwood', icon:'&#129683;',desc:'Smooth sea wood. Old Pebble needs 2 pieces to repair the dock.'},
+  lakePebble: {name:'Lake Pebble',icon:'&#11044;',desc:'A smooth stone from the forest lake.'},
+  runeSketch: {name:'Rune Sketch',icon:'&#128221;',desc:"Wren's sketch of the temple symbols."},
+  turnip:     {name:'Turnip',    icon:'&#129381;',desc:'Farm fresh! Bring 3 to Rue at the market for a trade.'},
+  lanternPart:{name:'Lantern Part',icon:'&#127982;',desc:'A piece of the old lighthouse lantern.'},
+  oldLetter:  {name:'Old Letter',icon:'&#9993;',  desc:'A letter in Mira\'s handwriting.'}
+};
+
+function addItem(id,n){
+  if(!ITEMS[id])return; // guard against unknown ids
+  INV[id]=(INV[id]||0)+(n||1);
+  var _total=INV[id];
+  showItemFlash('+ '+ITEMS[id].icon+' '+ITEMS[id].name+' (x'+_total+')');
+  checkQuestProgress();
+  // live-refresh inventory tab if it is open
+  if(journalOpen && journalTab==='inventory') refreshInventory();
+}
+function hasItem(id,n){ return (INV[id]||0)>=(n||1); }
+function removeItem(id,n){
+  if(!ITEMS[id])return; // guard unknown ids
+  INV[id]=Math.max(0,(INV[id]||0)-(n||1));
+  if(journalOpen && journalTab==='inventory') refreshInventory();
+}
+
+// ══════════════════════════════════════════════
+//  WORLD ITEMS — randomised per zone each game
+// ══════════════════════════════════════════════
+// Each entry defines how many of an item to spawn,
+// a list of rectangular tile zones to pick from,
+// and which tile types count as valid ground.
+var ITEM_ZONES={
+  cloudberry:{count:3, tiles:[24,12],
+    zones:[{r0:8,r1:13,c0:63,c1:68},{r0:5,r1:9,c0:65,c1:70},{r0:5,r1:8,c0:68,c1:73}]},
+  driftwood: {count:3, tiles:[14,1],
+    zones:[{r0:52,r1:55,c0:5,c1:25},{r0:52,r1:55,c0:25,c1:50},{r0:52,r1:55,c0:50,c1:75}]},
+  lakePebble:{count:2, tiles:[11,0],
+    zones:[{r0:2,r1:4,c0:28,c1:40},{r0:2,r1:4,c0:40,c1:52}]},
+  turnip:    {count:2, tiles:[17,18,1],
+    zones:[{r0:19,r1:38,c0:44,c1:55},{r0:19,r1:38,c0:55,c1:72}]},
+  lanternPart:{count:1,tiles:[1,11],
+    zones:[{r0:8,r1:13,c0:6,c1:12}]},
+  oldLetter: {count:1, tiles:[1,0],
+    zones:[{r0:28,r1:32,c0:16,c1:26}]}
+};
+
+var worldItems=[];
+
+function spawnWorldItems(){
+  worldItems=[];
+  for(var itemId in ITEM_ZONES){
+    var spec=ITEM_ZONES[itemId];
+    var placed=0, attempts=0;
+    while(placed<spec.count && attempts<300){
+      attempts++;
+      var zone=spec.zones[Math.floor(Math.random()*spec.zones.length)];
+      var col=zone.c0+Math.floor(Math.random()*(zone.c1-zone.c0));
+      var row=zone.r0+Math.floor(Math.random()*(zone.r1-zone.r0));
+      if(col<0||col>=COLS||row<0||row>=ROWS) continue;
+      if(spec.tiles.indexOf(MAP[row][col])===-1) continue;
+      var wx=col*TILE+4, wy=row*TILE+4;
+      // keep items at least 2 tiles apart from each other
+      var tooClose=false;
+      for(var k=0;k<worldItems.length;k++){
+        if(worldItems[k].id===itemId &&
+           Math.hypot(worldItems[k].x-wx,worldItems[k].y-wy)<tp(2)){
+          tooClose=true; break;
+        }
+      }
+      if(tooClose) continue;
+      worldItems.push({id:itemId,x:wx,y:wy,picked:false});
+      placed++;
+    }
+    // Fallback: place at zone centre if random placement failed
+    for(var fi=placed;fi<spec.count;fi++){
+      var fz=spec.zones[fi%spec.zones.length];
+      worldItems.push({
+        id:itemId,
+        x:Math.floor((fz.c0+fz.c1)/2)*TILE+4,
+        y:Math.floor((fz.r0+fz.r1)/2)*TILE+4,
+        picked:false
+      });
+    }
+  }
+}
+spawnWorldItems(); // initial spawn
+
+// ══════════════════════════════════════════════
+//  QUEST SYSTEM
+// ══════════════════════════════════════════════
+/*
+  Quest states: 'locked' | 'active' | 'done'
+  Each quest has steps[], each step has:
+    text, done flag, and optional trigger function
+*/
+var QUESTS={
+  q_welcome:{
+    title:'Welcome to Dewdrop Valley',
+    giver:'Elder Moss',
+    desc:'Get your bearings. Elder Moss suggested you meet the neighbours.',
+    state:'active',
+    steps:[
+      {text:'Talk to Elder Moss',done:false},
+      {text:'Talk to Bramble',done:false},
+      {text:'Talk to Sol',done:false},
+      {text:'Find your cottage and sleep',done:false}
+    ]
+  },
+  q_cloudberry:{
+    title:"Bramble's Cloudberry Tea",
+    giver:'Bramble',
+    desc:"Bramble makes a special tea with cloudberries. They grow on the mountain trail to the northeast. Collect 3 and bring them back.",
+    state:'locked',
+    steps:[
+      {text:'Collect cloudberries on the mountain trail (0/3)',done:false},
+      {text:'Return to Bramble',done:false}
+    ]
+  },
+  q_lighthouse:{
+    title:'Light the Lighthouse',
+    giver:'Sol',
+    desc:"Sol has been avoiding the lighthouse. Find the missing lantern part and help Sol relight the beacon.",
+    state:'locked',
+    steps:[
+      {text:'Find the lantern part near the lighthouse cliff',done:false},
+      {text:'Bring it to Sol',done:false},
+      {text:'Visit the lighthouse together',done:false}
+    ]
+  },
+  q_siblings:{
+    title:'The Sisters\' Rift',
+    giver:'Clem',
+    desc:"Clem and Rue haven't spoken in 10 years. Learn what divided them and help bring them back together.",
+    state:'locked',
+    steps:[
+      {text:'Talk to Clem about Rue',done:false},
+      {text:'Talk to Rue at the market',done:false},
+      {text:'Deliver Rue\'s message to Clem',done:false},
+      {text:'Return to Rue with Clem\'s reply',done:false}
+    ]
+  },
+  q_ruins:{
+    title:'Secrets of the Temple',
+    giver:'Wren',
+    desc:"Wren has been decoding rune symbols at the ruined temple. She needs a rune sketch delivered to Elder Moss, and wants you to search the ruins for clues.",
+    state:'locked',
+    steps:[
+      {text:'Collect rune sketch from Wren',done:false},
+      {text:'Bring the sketch to Elder Moss',done:false},
+      {text:'Gather 2 lake pebbles (symbols near the water)',done:false},
+      {text:'Return to Wren',done:false}
+    ]
+  },
+  q_lantern:{
+    title:'Restore the Lantern Night',
+    giver:'Old Pebble',
+    desc:'The Lantern Night festival has been dark for 10 years. Earn enough trust from all the villagers to rekindle it.',
+    state:'locked',
+    steps:[
+      {text:'Reach friendship 30+ with Bramble',done:false},
+      {text:'Reach friendship 30+ with Sol',done:false},
+      {text:'Reconcile Clem and Rue',done:false},
+      {text:'Deliver Mira\'s old letter to Elder Moss',done:false},
+      {text:'Speak with Old Pebble at the shore',done:false}
+    ]
+  }
+};
+
+function questActive(id){return QUESTS[id]&&QUESTS[id].state==='active';}
+function questDone(id){return QUESTS[id]&&QUESTS[id].state==='done';}
+function unlockQuest(id){
+  if(!QUESTS[id])return;
+  if(QUESTS[id].state==='locked'){
+    QUESTS[id].state='active';
+    notify('New Quest: '+QUESTS[id].title);
+    refreshJournal();
+  }
+}
+function completeQuest(id){
+  if(!QUESTS[id])return;
+  if(QUESTS[id].state==='done')return;
+  QUESTS[id].state='done';
+  QUESTS[id].steps.forEach(function(s){s.done=true;});
+  notify('&#10003; Quest complete: '+QUESTS[id].title);
+  // Festival activation
+  if(!festivalActive&&questDone('q_lantern')){
+    festivalActive=true;
+    notify('&#127987; The Lantern Night has returned! The valley celebrates!');
+    // Show end screen after short delay (let notification show first)
+    setTimeout(function(){
+      $endName.textContent=playerName;
+      $endScreen.style.display='flex';
+    },3000);
+  }
+  refreshJournal();
+}
+function stepDone(qid,idx){
+  var q=QUESTS[qid];
+  if(!q||idx<0||idx>=q.steps.length)return;
+  if(q.steps[idx].done)return;
+  q.steps[idx].done=true;
+  refreshJournal();
+}
+
+// Check all progress whenever inventory or rel changes
+function checkQuestProgress(){
+  // q_welcome: auto-complete when all 4 steps done
+  if(questActive('q_welcome')){
+    if(QUESTS.q_welcome.steps.every(function(s){return s.done;}))
+      completeQuest('q_welcome');
+  }
+  // q_cloudberry: got 3?
+  if(questActive('q_cloudberry')||questDone('q_cloudberry')||true){
+    var _n=INV.cloudberry||0;
+    if(questActive('q_cloudberry')){
+      QUESTS.q_cloudberry.steps[0].text='Collect cloudberries on the mountain trail ('+Math.min(_n,3)+'/3)';
+      if(_n>=3){ stepDone('q_cloudberry',0); }
+    }
+  }
+  // q_lighthouse: step 0 done when lanternPart collected
+  if(questActive('q_lighthouse')&&!QUESTS.q_lighthouse.steps[0].done){
+    if(hasItem('lanternPart')) stepDone('q_lighthouse',0);
+  }
+  // q_ruins: got 2 lake pebbles?
+  if(questActive('q_ruins')){
+    if((INV.lakePebble||0)>=2&&QUESTS.q_ruins.steps[1].done)
+      stepDone('q_ruins',2);
+  }
+  // q_lantern: friendship thresholds
+  if(questActive('q_lantern')){
+    if(rel.Bramble>=30) stepDone('q_lantern',0);
+    if(rel.Sol>=30)     stepDone('q_lantern',1);
+    if(questDone('q_siblings')) stepDone('q_lantern',2);
+    if(letterDelivered) stepDone('q_lantern',3); // only after actual delivery
+  }
+  refreshJournal();
+}
+
+// ══════════════════════════════════════════════
+//  NPC DATA
+// ══════════════════════════════════════════════
+// Each NPC script can now call quest functions
+var NPCS=[
+  {
+    id:'Elder',name:'Elder Moss',
+    x:tp(9),y:tp(15),color:'#d4c090',hair:'#e8e8e8',shirt:'#7a6aaa',
+    path:[{x:tp(9),y:tp(14)},{x:tp(9),y:tp(16)},{x:tp(11),y:tp(16)},{x:tp(11),y:tp(14)}],
+    pathIdx:0,speed:0.5,
+    talk:function(){
+      stepDone('q_welcome',0);
+      // If player has rune sketch, take it and advance ruins quest
+      if(questActive('q_ruins')&&QUESTS.q_ruins.steps[0].done&&!QUESTS.q_ruins.steps[1].done&&hasItem('runeSketch')){
+        removeItem('runeSketch');
+        rel.Elder=Math.min(100,rel.Elder+10);
+        stepDone('q_ruins',1);
+        checkQuestProgress();
+        return {speaker:'Elder Moss',lines:[
+          "A rune sketch... I have not seen these since Mira's time.",
+          "She was the one who first mapped the temple symbols.",
+          "The three signs: flame, water, hand. They mean offering, memory, and release.",
+          "The Lantern Night was built on all three.",
+          "Take this knowledge back to Wren. And thank her for her courage."
+        ]};
+      }
+      // If player has old letter, big moment
+      if(questActive('q_lantern')&&hasItem('oldLetter')){
+        removeItem('oldLetter');
+        letterDelivered=true;
+        rel.Elder=Math.min(100,rel.Elder+25);
+        stepDone('q_lantern',3);
+        checkQuestProgress();
+        unlockQuest('q_lantern');
+        return {speaker:'Elder Moss',lines:[
+          "...This is Mira's handwriting.",
+          "I recognise it anywhere.",
+          "She writes that she is sorry. That the festival was always meant to be a gift, not a burden.",
+          "That she let pride turn it into one.",
+          "I have been waiting ten years to hear this.",
+          "Thank you. More than you know."
+        ]};
+      }
+      if(!this.spokenToday){
+        return {speaker:'Elder Moss',
+          lines:["Ah, a new face! Welcome to Dewdrop Valley.",
+                 "I am Elder Moss. Your great-aunt Mira spoke of you often.",
+                 "You should meet your neighbours: Bramble to the east, Sol near the square.",
+                 "And explore — the valley is larger than it looks."],
+          choices:['Ask about the valley','Ask about Mira'],
+          onChoice:function(i){
+            if(i===0) return {speaker:'Elder Moss',lines:[
+              "Seven zones surround the village.",
+              "North: deep forest and a hidden lake. Northeast: the mountain pass.",
+              "Northwest: the lighthouse cliff. East: Clem's farm.",
+              "Southwest: an ancient ruined temple. South: the beach.",
+              "Press Q to open your journal and track quests as you go."
+            ]};
+            return {speaker:'Elder Moss',lines:[
+              "Mira was complicated. Wonderful, but complicated.",
+              "She carried a secret she never quite let go of.",
+              "You may find answers in her cottage — or in the hearts of those she loved."
+            ]};
+          }
+        };
+      }
+      return {speaker:'Elder Moss',lines:["The valley keeps its secrets slowly. Be patient with it."]};
+    },
+    spokenToday:false
+  },
+  {
+    id:'Bramble',name:'Bramble',
+    x:tp(31),y:tp(14),color:'#c09050',hair:'#5a3a1a',shirt:'#5a7a3a',
+    path:[{x:tp(31),y:tp(13)},{x:tp(31),y:tp(16)},{x:tp(29),y:tp(16)},{x:tp(29),y:tp(13)}],
+    pathIdx:0,speed:0.4,
+    talk:function(){
+      stepDone('q_welcome',1);
+      // Cloudberry delivery — accept if step done OR player simply has 3
+      if(questActive('q_cloudberry')&&(QUESTS.q_cloudberry.steps[0].done||(INV.cloudberry||0)>=3)&&!QUESTS.q_cloudberry.steps[1].done){
+        removeItem('cloudberry',3);
+        rel.Bramble=Math.min(100,rel.Bramble+20);
+        stepDone('q_cloudberry',1); // mark 'Return to Bramble' done
+        completeQuest('q_cloudberry');
+        checkQuestProgress();
+        return {speaker:'Bramble',lines:[
+          "...You actually found them.",
+          "Three cloudberries. Perfect ones.",
+          "I will make the tea tonight.",
+          "Mira would have liked you, I think.",
+          "Here — take these herbs. They are useful on the trail."
+        ]};
+      }
+      if(!this.spokenToday){
+        unlockQuest('q_cloudberry');
+        rel.Bramble=Math.min(100,rel.Bramble+10);
+        checkQuestProgress();
+        return {speaker:'Bramble',
+          lines:["Hmph. You took over Mira's cottage.",
+                 "I suppose you will want to know the valley.",
+                 "There is one thing I need: cloudberries from the mountain trail.",
+                 "Three of them. Bring them and I will owe you.",
+                 "[ Quest: Bramble's Cloudberry Tea — now active ]"]
+        };
+      }
+      var n=INV.cloudberry||0;
+      if(n>0&&n<3) return {speaker:'Bramble',lines:["You have "+(n)+" cloudberries. I need three. Keep looking."]};
+      // Daily chat: small friendship bump only while quest active
+      if(questActive('q_cloudberry')){
+        rel.Bramble=Math.min(100,rel.Bramble+5);
+        checkQuestProgress();
+      }
+      return {speaker:'Bramble',lines:["The mountain trail. Northeast. That is where the cloudberries grow.",
+        "(Friendship with Bramble: "+rel.Bramble+"/100)"]};
+    },
+    spokenToday:false
+  },
+  {
+    id:'Sol',name:'Sol',
+    x:tp(20),y:tp(25),color:'#a0c8d8',hair:'#2a3a5a',shirt:'#3a5a8a',
+    path:[{x:tp(20),y:tp(24)},{x:tp(22),y:tp(24)},{x:tp(22),y:tp(26)},{x:tp(20),y:tp(26)}],
+    pathIdx:0,speed:0.6,
+    talk:function(){
+      stepDone('q_welcome',2);
+      // Lantern part delivery
+      if(questActive('q_lighthouse')&&(QUESTS.q_lighthouse.steps[0].done||hasItem('lanternPart'))&&!QUESTS.q_lighthouse.steps[1].done&&hasItem('lanternPart')){
+        removeItem('lanternPart');
+        rel.Sol=Math.min(100,rel.Sol+20);
+        stepDone('q_lighthouse',1);
+        checkQuestProgress();
+        return {speaker:'Sol',lines:[
+          "The lantern part! Where did you find this?",
+          "I dropped it the last time I tried to climb up there.",
+          "A year ago. Maybe more.",
+          "Okay. With this, I can fix the beacon.",
+          "Come with me to the lighthouse? I — I think I am ready now."
+        ],choices:["Let's go right now","You can do it!"],
+        onChoice:function(i){
+          stepDone('q_lighthouse',2);
+          rel.Sol=Math.min(100,rel.Sol+15);
+          completeQuest('q_lighthouse');
+          checkQuestProgress();
+          if(i===0) return {speaker:'Sol',lines:[
+            "Together then.",
+            "The light comes on. For the first time in years.",
+            "The whole valley lit up from up there.",
+            "...It is even more beautiful than I remembered.",
+            "Thank you. Really."
+          ]};
+          return {speaker:'Sol',lines:[
+            "You are right. I can.",
+            "I climb up. Turn the key. And — light.",
+            "The lighthouse is alive again.",
+            "I had forgotten how much I loved it up there."
+          ]};
+        }};
+      }
+      if(!this.spokenToday){
+        unlockQuest('q_lighthouse');
+        rel.Sol=Math.min(100,rel.Sol+10);
+        checkQuestProgress();
+        return {speaker:'Sol',
+          lines:["Oh! Sorry — did not see you.",
+                 "I am Sol. I keep the lighthouse on the northwest cliff.",
+                 "Or I should. I dropped the lantern mechanism part months ago.",
+                 "It is somewhere near the cliff base. If you find it...",
+                 "[ Quest: Light the Lighthouse — now active ]"]
+        };
+      }
+      if(!hasItem('lanternPart')){
+        if(questActive('q_lighthouse')){ rel.Sol=Math.min(100,rel.Sol+3); checkQuestProgress(); }
+        return {speaker:'Sol',lines:["The lantern part should be somewhere near the cliff. Northwest corner of the valley.",
+          "(Friendship with Sol: "+rel.Sol+"/100)"]};
+      }
+      return {speaker:'Sol',lines:["You found it! Bring it to me and we will fix the lighthouse together."]};
+    },
+    spokenToday:false
+  },
+  {
+    id:'Clem',name:'Clem',
+    x:tp(52),y:tp(17),color:'#d4a870',hair:'#3a2a10',shirt:'#8a4a2a',
+    path:[{x:tp(52),y:tp(16)},{x:tp(55),y:tp(16)},{x:tp(55),y:tp(18)},{x:tp(52),y:tp(18)}],
+    pathIdx:0,speed:0.5,
+    _rueDelivered:false,
+    talk:function(){
+      // Rue's message delivery
+      if(questActive('q_siblings')&&QUESTS.q_siblings.steps[1].done&&!QUESTS.q_siblings.steps[2].done){
+        rel.Clem=Math.min(100,rel.Clem+20);
+        stepDone('q_siblings',2);
+        checkQuestProgress();
+        return {speaker:'Clem',lines:[
+          "Rue... said that?",
+          "She misses me.",
+          "I have been standing at my gate every morning wondering if she would walk up the path.",
+          "Tell her... tell her I will be at the market tomorrow.",
+          "Tell her I am sorry I waited so long."
+        ]};
+      }
+      if(!this.spokenToday){
+        unlockQuest('q_siblings');
+        return {speaker:'Clem',
+          lines:["Hello! You must be from Mira's cottage.",
+                 "I am Clem. I run the east farm.",
+                 "My sister Rue and I... we had a falling out. Ten years ago.",
+                 "She is at the market square. If you speak to her...",
+                 "Tell her I miss her. Please.",
+                 "[ Quest: The Sisters' Rift — now active ]"],
+          choices:["I will talk to her","That sounds painful"],
+          onChoice:function(i){
+            stepDone('q_siblings',0);
+            if(i===0) return {speaker:'Clem',lines:["Thank you. She is stubborn, but she listens."]};
+            return {speaker:'Clem',lines:["It is. Ten years is a long time to miss someone who is still alive."]};
+          }
+        };
+      }
+      return {speaker:'Clem',lines:["Did you speak with Rue yet? She is at the market square, east of the village."]};
+    },
+    spokenToday:false
+  },
+  {
+    id:'Rue',name:'Rue',_turnipTraded:false,
+    x:tp(44),y:tp(26),color:'#d4a870',hair:'#3a2a10',shirt:'#5a7aaa',
+    path:[{x:tp(44),y:tp(25)},{x:tp(46),y:tp(25)},{x:tp(46),y:tp(27)},{x:tp(44),y:tp(27)}],
+    pathIdx:0,speed:0.5,
+    talk:function(){
+      // Turnip trade — bring 3 turnips for friendship + reward
+      if((INV.turnip||0)>=3&&!this._turnipTraded){
+        this._turnipTraded=true;
+        removeItem('turnip',3);
+        rel.Rue=Math.min(100,rel.Rue+20);
+        addItem('cloudberry',1); // reward: a traded cloudberry jam
+        checkQuestProgress();
+        return {speaker:'Rue',lines:[
+          "Oh! Fresh turnips — three of them!",
+          "I have been looking for these all week.",
+          "Here, take this cloudberry jam in trade.",
+          "I made it from the last of last season's harvest.",
+          "Come back any time — I always need fresh produce.",
+          "(Friendship with Rue: "+rel.Rue+"/100)"
+        ]};
+      }
+      // Clem's reply delivered
+      if(questActive('q_siblings')&&QUESTS.q_siblings.steps[2].done&&!QUESTS.q_siblings.steps[3].done){
+        rel.Rue=Math.min(100,rel.Rue+20);
+        stepDone('q_siblings',3);
+        completeQuest('q_siblings');
+        checkQuestProgress();
+        return {speaker:'Rue',lines:[
+          "She will come tomorrow.",
+          "After ten years.",
+          "I do not know whether to cry or laugh.",
+          "Both, probably.",
+          "Thank you — for being the bridge we could not build ourselves.",
+          "[ Quest complete: The Sisters' Rift ]"
+        ]};
+      }
+      if(questActive('q_siblings')&&QUESTS.q_siblings.steps[0].done&&!QUESTS.q_siblings.steps[1].done){
+        rel.Rue=Math.min(100,rel.Rue+10);
+        stepDone('q_siblings',1);
+        checkQuestProgress();
+        return {speaker:'Rue',lines:[
+          "Clem sent you.",
+          "I can always tell.",
+          "She gives people this look when she wants something.",
+          "...Tell her I miss her too.",
+          "Tell her I am sorry I let the argument go on this long.",
+          "Tell her I will try."
+        ]};
+      }
+      if(!this.spokenToday){
+        return {speaker:'Rue',
+          lines:["The market is quiet today. I prefer it.",
+                 "I am Rue. Preserves, dried herbs, that sort of thing.",
+                 "My sister Clem has the farm east of here.",
+                 "We do not... talk. It is complicated."]
+        };
+      }
+      return {speaker:'Rue',lines:["Things are... moving. I am trying to be brave about it."]};
+    },
+    spokenToday:false
+  },
+  {
+    id:'Wren',name:'Wren',
+    x:tp(13),y:tp(44),color:'#c8a0d0',hair:'#2a1a3a',shirt:'#8a5aaa',
+    path:[{x:tp(12),y:tp(43)},{x:tp(15),y:tp(43)},{x:tp(15),y:tp(46)},{x:tp(12),y:tp(46)}],
+    pathIdx:0,speed:0.6,
+    talk:function(){
+      // Ruins quest completion
+      if(questActive('q_ruins')&&QUESTS.q_ruins.steps[2].done&&!QUESTS.q_ruins.steps[3].done){
+        rel.Wren=Math.min(100,rel.Wren+20);
+        stepDone('q_ruins',3); // mark 'Return to Wren' done
+        completeQuest('q_ruins');
+        checkQuestProgress();
+        return {speaker:'Wren',lines:[
+          "Two lake pebbles! Perfect.",
+          "The stones from the lake carry an old impression — the symbols are faintly there.",
+          "Flame. Water. Hand.",
+          "Offering, memory, release. Elder Moss confirmed it.",
+          "The Lantern Night was an act of letting go.",
+          "Mira built it, then could not release it. That was the tragedy.",
+          "[ Quest complete: Secrets of the Temple ]"
+        ]};
+      }
+      if(!this.spokenToday){
+        unlockQuest('q_ruins');
+        return {speaker:'Wren',
+          lines:["Oh! A visitor. I am Wren — artist, wanderer.",
+                 "I have been studying the rune symbols on these temple stones.",
+                 "Three symbols keep repeating. I sketched them.",
+                 "Could you take this sketch to Elder Moss? He may know what they mean.",
+                 "And while you are at it — the forest lake. Bring me two pebbles from its shore.",
+                 "[ Quest: Secrets of the Temple — now active ]"],
+          choices:["I'll help","What are you looking for?"],
+          onChoice:function(i){
+            addItem('runeSketch');
+            stepDone('q_ruins',0);
+            checkQuestProgress();
+            if(i===0) return {speaker:'Wren',lines:["Thank you! Elder Moss is near the red-roofed cottage in the north village."]};
+            return {speaker:'Wren',lines:[
+              "The truth about the Lantern Night.",
+              "And whatever Mira was trying to say with it."
+            ]};
+          }
+        };
+      }
+      if(QUESTS.q_ruins.steps[1].done&&!QUESTS.q_ruins.steps[2].done){
+        var n=INV.lakePebble||0;
+        return {speaker:'Wren',lines:["Elder Moss helped — thank you! Now: lake pebbles. I need 2. Forest lake, north. ("+n+"/2 so far)"]};
+      }
+      return {speaker:'Wren',lines:["The stones hold so much history. It is like reading a very slow letter."]};
+    },
+    spokenToday:false
+  },
+  {
+    id:'Pebble',name:'Old Pebble',_dockRepaired:false,
+    x:tp(20),y:tp(54),color:'#b0a080',hair:'#d8d0c0',shirt:'#4a6a8a',
+    path:[{x:tp(16),y:tp(54)},{x:tp(22),y:tp(54)},{x:tp(22),y:tp(53)},{x:tp(16),y:tp(53)}],
+    pathIdx:0,speed:0.4,
+    talk:function(){
+      // Driftwood dock repair — 2 driftwood gives friendship + reward
+      if((INV.driftwood||0)>=2&&!this._dockRepaired){
+        this._dockRepaired=true;
+        removeItem('driftwood',2);
+        rel.Pebble=Math.min(100,rel.Pebble+20);
+        addItem('lakePebble',1); // reward: a lucky pebble
+        checkQuestProgress();
+        return {speaker:'Old Pebble',lines:[
+          "Driftwood... two good pieces.",
+          "That is exactly what I needed to patch the dock planks.",
+          "Been putting it off for years. Heh.",
+          "Here, take this lucky pebble from the shore.",
+          "Found it the morning Mira left. Kept it ever since.",
+          "(Friendship with Old Pebble: "+rel.Pebble+"/100)"
+        ]};
+      }
+      if(!(INV.driftwood>=2)&&!this._dockRepaired){
+        // Hint about driftwood
+      }
+      // Final lantern quest step
+      if(questActive('q_lantern')&&QUESTS.q_lantern.steps[3].done&&!QUESTS.q_lantern.steps[4].done){
+        rel.Pebble=Math.min(100,rel.Pebble+20);
+        stepDone('q_lantern',4);
+        completeQuest('q_lantern');
+        checkQuestProgress();
+        return {speaker:'Old Pebble',lines:[
+          "So. The letter reached Elder Moss.",
+          "And the lighthouse is lit again.",
+          "And the sisters have mended their rift.",
+          "I never thought I would see this day.",
+          "Mira once told me: a festival is not a thing you hold.",
+          "It is a thing you release — like a lantern into the dark.",
+          "The Lantern Night will burn again this midsummer.",
+          "I think she would have wanted that.",
+          "[ Quest complete: Restore the Lantern Night ]",
+          "&#127882; THE VALLEY IS HEALED. Thank you."
+        ]};
+      }
+      if(!this.spokenToday){
+        unlockQuest('q_lantern');
+        return {speaker:'Old Pebble',
+          lines:["Hm. A visitor this far south.",
+                 "I am Old Pebble. Fisherman. I have watched this shore for decades.",
+                 "Mira used to sit here every sunset.",
+                 "If you want to restore the Lantern Night... it will take trust.",
+                 "Earn it from the whole valley. Then come back.",
+                 "[ Quest: Restore the Lantern Night — now active ]"],
+          choices:["What do I need to do?","Tell me about Mira"],
+          onChoice:function(i){
+            if(i===0) return {speaker:'Old Pebble',lines:[
+              "Befriend Bramble and Sol — thirty points each.",
+              "Help Clem and Rue reconcile.",
+              "Bring Mira's old letter to Elder Moss.",
+              "Then return to me.",
+              "The letter is somewhere in your cottage. Look around."
+            ]};
+            return {speaker:'Old Pebble',lines:[
+              "She walked this shore the night the festival ended.",
+              "Carried the last lantern until its flame died.",
+              "Then walked home. Never spoke of it again.",
+              "She was trying to let go. She just could not manage it alone."
+            ]};
+          }
+        };
+      }
+      // Progress update
+      var lines=["The valley needs healing before the festival can return."];
+      if(rel.Bramble<30) lines.push("Bramble: "+rel.Bramble+"/30 friendship.");
+      if(rel.Sol<30)     lines.push("Sol: "+rel.Sol+"/30 friendship.");
+      if(!questDone('q_siblings')) lines.push("Clem and Rue are still estranged.");
+      if(hasItem('oldLetter'))     lines.push("Mira's letter — bring it to Elder Moss.");
+      return {speaker:'Old Pebble',lines:lines};
+    },
+    spokenToday:false
+  }
+];
+
+// ══════════════════════════════════════════════
+//  DOM REFS
+// ══════════════════════════════════════════════
+var canvas=document.getElementById('canvas');
+var ctx=canvas.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+var mmCanvas=document.getElementById('minimap');
+var mmCtx=mmCanvas.getContext('2d');
+mmCtx.imageSmoothingEnabled=false;
+var $signWrap  =document.getElementById('sign-wrap');
+var $signSpeak =document.getElementById('sign-speaker');
+var $signText  =document.getElementById('sign-text');
+var $dlgWrap=document.getElementById('dlg-wrap');
+var $dlgSpeak=document.getElementById('dlg-speaker');
+var $dlgText=document.getElementById('dlg-text');
+var $choiceW=document.getElementById('choice-wrap');
+var $notif=document.getElementById('notif');
+var $itemFlash=document.getElementById('item-flash');
+var $hudDay     =document.getElementById('hud-day');
+var $hudLoc     =document.getElementById('hud-loc');
+var $hudHeart   =document.getElementById('hud-heart');
+var $hurtFlash  =document.getElementById('hurt-flash');
+var $endScreen  =document.getElementById('end-screen');
+var $endName    =document.getElementById('end-player-name');
+var $staminaWrap=document.getElementById('stamina-wrap');
+var $staminaBar =document.getElementById('stamina-bar');
+var $staminaTxt =document.getElementById('stamina-txt');
+var $qPanel=document.getElementById('quest-panel');
+var $qList=document.getElementById('quest-list');
+var $invSection=document.getElementById('inv-section');
+var $invGrid=document.getElementById('inv-grid');
+
+// ══════════════════════════════════════════════
+//  INPUT
+// ══════════════════════════════════════════════
+document.addEventListener('keydown',function(e){
+  if(!gameRunning)return;
+
+  // ── Choice menu navigation (takes full priority) ──
+  if($choiceW.style.display==='block'&&dlg&&dlg.choices){
+    if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){
+      e.preventDefault();
+      selectedChoice=(selectedChoice-1+dlg.choices.length)%dlg.choices.length;
+      highlightChoice();
+      return;
+    }
+    if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){
+      e.preventDefault();
+      selectedChoice=(selectedChoice+1)%dlg.choices.length;
+      highlightChoice();
+      return;
+    }
+    if(e.key==='e'||e.key==='E'||e.key==='Enter'||e.key===' '){
+      e.preventDefault();
+      pickChoice(selectedChoice);
+      return;
+    }
+    // Number keys 1-9 for direct selection
+    var num=parseInt(e.key,10);
+    if(!isNaN(num)&&num>=1&&num<=dlg.choices.length){
+      e.preventDefault();
+      pickChoice(num-1);
+      return;
+    }
+    e.preventDefault(); // block movement while choices are open
+    return;
+  }
+
+  keys[e.key]=true;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].indexOf(e.key)!==-1)e.preventDefault();
+  if(e.key==='e'||e.key==='E'||e.key===' '){e.preventDefault();interactPressed=true;}
+  if(e.key==='q'||e.key==='Q'){e.preventDefault();journalPressed=true;}
+  if(e.key==='Escape'){e.preventDefault();
+    if(escOpen){closeEscMenu();}else{openEscMenu();}
+  }
+});
+document.addEventListener('keyup',function(e){keys[e.key]=false;});
+
+// ══════════════════════════════════════════════
+//  SIGNS
+// ══════════════════════════════════════════════
+var SIGNS=[
+  {col:17,row:20,
+   lines:[
+     '=== DEWDROP VALLEY ===',
+     'WASD / Arrows \u2014 Move',
+     'E \u2014 Talk to NPCs / Interact',
+     'Q \u2014 Quest Journal & Inventory',
+     'ESC \u2014 Menu (Music, Restart)',
+     'Walk over glowing items to pick up',
+     'Climb mountains with care \u2014 watch stamina!'
+   ]},
+  {col:40,row:24,
+   lines:[
+     '=== NIGHT MARKET ===',
+     'Rue sells wares here most evenings.',
+     'Clem brings produce on market days.',
+     'E \u2014 Talk to NPCs',
+     'Q \u2014 Open your journal'
+   ]}
+];
+
+// Returns the sign the player is currently near, or null
+function nearSign(){
+  for(var s=0;s<SIGNS.length;s++){
+    var sg=SIGNS[s];
+    var wx=sg.col*TILE+8, wy=sg.row*TILE+8;
+    if(Math.hypot(player.x+8-wx,player.y+8-wy)<48) return sg;
+  }
+  return null;
+}
+function checkSignProximity(){
+  // Hide box if player walks away while it is open
+  if($signWrap.style.display==='block'&&!nearSign()){
+    $signWrap.style.display='none';
+    signTooltipText='';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function notify(msg){$notif.textContent=msg;$notif.style.opacity='1';notifTimer=220;}
+function showItemFlash(msg){$itemFlash.innerHTML=msg;$itemFlash.style.opacity='1';itemFlashTimer=120;}
+
+function tileAt(wx,wy){
+  var c=Math.floor(wx/TILE),r=Math.floor(wy/TILE);
+  if(r<0||r>=ROWS||c<0||c>=COLS)return 2;
+  return MAP[r][c];
+}
+// Water(5,22) and houses(3,7,8,20,21) are NOT solid — player can enter them.
+// Only true blockers: trees(2), well(4), fence(6), mountain(12), snow(13), ruins(16)
+// 12=mountain, 13=snow: climbable (slow), NOT solid
+var SOLID=[2,4,6,16];
+// Water tiles slow movement
+var WATER_TILES=[5,22];
+// Mountain tiles cost stamina
+var MOUNTAIN_TILES=[12,13];
+function isWater(t){return WATER_TILES.indexOf(t)!==-1;}
+function playerOnWater(){
+  return isWater(tileAt(player.x+8,player.y+12));
+}
+function playerOnMountain(){
+  var t=tileAt(player.x+8,player.y+12);
+  return MOUNTAIN_TILES.indexOf(t)!==-1;
+}
+function playerOnPath(){
+  var t=tileAt(player.x+8,player.y+12);
+  return t===24; // mountain path tile restores stamina faster
+}
+// House door zones — near any house tile the player can press E to "enter"
+var HOUSE_DOORS=[
+  {col:10,row:16,label:"Elder Moss's Cottage",
+   lines:["A warm study packed with old books and dried herbs.",
+          "A pot of cloudberry tea steams on the hearth.",
+          "Elder Moss keeps meticulous records of the valley's history.",
+          "You spot a shelf labelled 'Festival Records — DO NOT MOVE'."]},
+  {col:31,row:16,label:"Bramble's Hut",
+   lines:["The hut smells of earth and pine resin.",
+          "Bundles of herbs hang from every rafter.",
+          "A single chair faces a low fire. It looks well-used.",
+          "On the table: three empty cloudberry jars. Waiting."]},
+  {col:21,row:34,label:"Your Cottage",
+   lines:["Home. Small, dusty — but yours.",
+          "Mira's furniture is still here. Her reading glasses on the table.",
+          "An old letter sits on the mantelpiece, sealed.",
+          "The bed looks very inviting."],
+   isCottage:true},
+  {col:52,row:18,label:"Clem's Farmhouse",
+   lines:["Mud boots by the door. A harvest calendar on the wall.",
+          "Family photographs line the mantelpiece.",
+          "One frame has been turned face-down. Rue, probably.",
+          "The smell of bread and soil is oddly comforting."]},
+  {col:4,row:9,label:"The Lighthouse",
+   lines:["A spiral staircase winds up into cool darkness.",
+          "The lens mechanism sits cold and still at the top.",
+          "Through the salt-stained glass: the whole valley below.",
+          "Even unlit, the view is breathtaking.",
+          "Sol would love it up here again."]}
+];
+function nearDoor(){
+  var pc=Math.round(player.x/TILE),pr=Math.round(player.y/TILE);
+  for(var i=0;i<HOUSE_DOORS.length;i++){
+    var d=HOUSE_DOORS[i];
+    if(Math.abs(pc-d.col)<=1&&Math.abs(pr-d.row)<=1)return d;
+  }
+  return null;
+}
+function isSolid(t){return SOLID.indexOf(t)!==-1;}
+function canMove(nx,ny){
+  var m=3;
+  return [[nx+m,ny+m],[nx+TILE-m,ny+m],[nx+m,ny+TILE-m],[nx+TILE-m,ny+TILE-m]]
+    .every(function(pt){return !isSolid(tileAt(pt[0],pt[1]));});
+}
+function nearCottage(){return Math.abs(player.x-tp(21))<48&&Math.abs(player.y-tp(34))<48;}
+
+function updateHUD(){
+  var icons={Morning:'&#127780;',Afternoon:'&#9728;',Evening:'&#127749;',Night:'&#127769;'};
+  $hudDay.innerHTML=(icons[timeOfDay]||'')+'&nbsp;Day&nbsp;'+day+'&nbsp;&mdash;&nbsp;'+timeOfDay;
+  var total=0;for(var k in rel)total+=rel[k];
+  // Health hearts (filled/empty based on current health)
+  var h='';
+  for(var i=0;i<healthMax;i++) h+=(i<health?'&#9829;':'&#9825;');
+  $hudHeart.innerHTML=h;
+}
+function updateStaminaHUD(){
+  var onMountain=playerOnMountain()||playerOnPath();
+  $staminaWrap.style.display=onMountain?'flex':'none';
+  if(onMountain){
+    var pct=Math.round(stamina/staminaMax*100);
+    $staminaBar.style.width=pct+'%';
+    $staminaBar.style.background=pct>60?'#6bae8a':pct>25?'#e8c840':'#e84040';
+    $staminaTxt.textContent=pct+'%';
+  }
+}
+function locationName(){
+  var pc=Math.floor(player.x/TILE),pr=Math.floor(player.y/TILE);
+  if(pr<11){if(pc<8)return 'Lighthouse Cliff';if(pc>61)return 'Mountain Pass';return 'Deep Forest';}
+  if(pr<35&&pc>44&&pc<74)return 'East Farm';
+  if(pr>23&&pr<31&&pc>39&&pc<59)return 'Night Market';
+  if(pr>37&&pr<53&&pc>4&&pc<21)return 'Ruined Temple';
+  if(pr>52)return 'Pebble Beach';
+  return 'Dewdrop Village';
+}
+
+// ══════════════════════════════════════════════
+//  JOURNAL UI
+// ══════════════════════════════════════════════
+function openJournal(){
+  journalOpen=true;
+  $qPanel.style.display='flex';
+  refreshJournal();
+}
+function closeJournal(){
+  journalOpen=false;
+  $qPanel.style.display='none';
+}
+function showTab(tab){
+  journalTab=tab;
+  document.querySelectorAll('.qtab').forEach(function(el){
+    el.classList.toggle('active',el.textContent.toLowerCase().indexOf(tab)!==-1);
+  });
+  $qList.style.display=(tab==='quests')?'flex':'none';
+  $invSection.style.display=(tab==='inventory')?'block':'none';
+  if(tab==='inventory') refreshInventory();
+  if(tab==='quests') refreshJournal();
+}
+function refreshJournal(){
+  $qList.innerHTML='';
+  var order=['q_welcome','q_cloudberry','q_lighthouse','q_siblings','q_ruins','q_lantern'];
+  order.forEach(function(qid){
+    var q=QUESTS[qid];
+    if(q.state==='locked')return;
+    var card=document.createElement('div');
+    card.className='qcard'+(q.state==='active'?' active-q':' done-q');
+    var tagHtml=q.state==='active'
+      ?'<span class="tag-active">&#9679; Active</span>'
+      :'<span class="tag-done">&#10003; Complete</span>';
+    var stepsHtml=q.steps.map(function(s,i){
+      var cls='qstep'+(s.done?' done':'');
+      // highlight first incomplete
+      if(!s.done&&q.state==='active'){
+        var allPrev=q.steps.slice(0,i).every(function(x){return x.done;});
+        if(allPrev) cls+=' current';
+      }
+      return '<div class="'+cls+'">'+(s.done?'&#10003;':'&#9675;')+' '+s.text+'</div>';
+    }).join('');
+    card.innerHTML='<div class="qcard-title">'+q.title+tagHtml+'</div>'
+      +'<div class="qcard-desc">'+q.desc+'</div>'
+      +'<div class="qcard-steps">'+stepsHtml+'</div>';
+    $qList.appendChild(card);
+  });
+}
+function refreshInventory(){
+  $invGrid.innerHTML='';
+  var hasAny=false;
+  for(var id in ITEMS){
+    var n=INV[id]||0;
+    if(n===0) continue; // only show collected items
+    hasAny=true;
+    var el=document.createElement('div');
+    el.className='inv-item';
+    el.style.opacity='1';
+    // render icon safely as text (entity already resolved in HTML context)
+    el.innerHTML=ITEMS[id].icon
+      +'<br><span style="color:#e8d5a3;font-size:11px">'+ITEMS[id].name+'</span>'
+      +'<br><span class="qty">x'+n+'</span>'
+      +'<br><span style="color:#5a6a5a;font-size:9px;line-height:1.3">'+ITEMS[id].desc+'</span>';
+    $invGrid.appendChild(el);
+  }
+  if(!hasAny){
+    var empty=document.createElement('div');
+    empty.style.cssText='color:#4a3a2a;font-size:11px;padding:10px;line-height:1.8;';
+    empty.innerHTML='Nothing collected yet.<br>'
+      +'<span style="color:#3a2a1a;font-size:10px">'
+      +'Explore the valley — glowing yellow dots on the minimap mark items.'
+      +'</span>';
+    $invGrid.appendChild(empty);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  DIALOGUE
+// ══════════════════════════════════════════════
+function openDlg(obj){
+  $signWrap.style.display='none'; // hide sign board when dialogue opens
+  dlg={speaker:obj.speaker||'',lines:obj.lines||[],index:0,choices:obj.choices||null,onChoice:obj.onChoice||null};
+  renderDlg();
+}
+function renderDlg(){
+  if(!dlg)return;
+  $dlgSpeak.textContent=dlg.speaker;
+  $dlgText.innerHTML=dlg.lines[dlg.index]||'';
+  $dlgWrap.style.display='block';$choiceW.style.display='none';
+}
+function advanceDlg(){
+  if(!dlg)return;
+  dlg.index++;
+  if(dlg.index<dlg.lines.length){renderDlg();}
+  else if(dlg.choices){showChoices();}
+  else{closeDlg();}
+}
+function showChoices(){
+  $dlgWrap.style.display='none';
+  // Clear all but keep the hint div
+  var hint=document.getElementById('choice-hint');
+  $choiceW.innerHTML='';
+  dlg.choices.forEach(function(label,i){
+    var el=document.createElement('div');
+    el.className='choice-item';
+    el.id='choice-'+i;
+    // Show number prefix for keyboard shortcut
+    el.textContent=(i+1)+'. '+label;
+    el.addEventListener('click',function(){pickChoice(i);});
+    $choiceW.appendChild(el);
+  });
+  // Re-add hint
+  var h=document.createElement('div');
+  h.id='choice-hint';
+  h.innerHTML='&#8593;&#8595; Navigate &nbsp;&middot;&nbsp; E / Enter Select &nbsp;&middot;&nbsp; 1-'+dlg.choices.length+' Direct';
+  $choiceW.appendChild(h);
+  selectedChoice=0;
+  $choiceW.style.display='block';
+  highlightChoice();
+}
+function highlightChoice(){
+  if(!dlg||!dlg.choices)return;
+  for(var i=0;i<dlg.choices.length;i++){
+    var el=document.getElementById('choice-'+i);
+    if(!el)continue;
+    el.className='choice-item'+(i===selectedChoice?' selected':'');
+  }
+}
+function pickChoice(i){
+  if(!dlg)return;
+  var fn=dlg.onChoice;dlg=null;
+  selectedChoice=0;
+  $choiceW.style.display='none';$dlgWrap.style.display='none';
+  if(fn){var next=fn(i);if(next){openDlg(next);return;}}
+  cooldown=20;
+}
+function closeDlg(){
+  var was=sleeping;sleeping=false;dlg=null;
+  $dlgWrap.style.display='none';$choiceW.style.display='none';
+  cooldown=20;
+  if(was)advanceDay();
+}
+
+// ══════════════════════════════════════════════
+//  INTERACTION
+// ══════════════════════════════════════════════
+function tryInteract(){
+  if(cooldown>0)return;
+  if(journalOpen){closeJournal();return;}
+  if(dlg){advanceDlg();return;}
+  // Close sign box with E if it's open
+  if($signWrap.style.display==='block'){
+    $signWrap.style.display='none';
+    signTooltipText='';
+    cooldown=20;
+    return;
+  }
+  // NPCs
+  for(var n=0;n<NPCS.length;n++){
+    var npc=NPCS[n];
+    if(Math.hypot(player.x-npc.x,player.y-npc.y)<tp(2)){
+      var result=npc.talk();
+      if(result)openDlg(result);
+      npc.spokenToday=true;
+      return;
+    }
+  }
+  // Livestock interaction
+  for(var li=0;li<LIVESTOCK.length;li++){
+    var lv=LIVESTOCK[li];
+    if(Math.hypot(player.x+8-lv.x,player.y+8-lv.y)<tp(1.5)){
+      var lname=lv.type==='chicken'?'Chicken':'Cow';
+      var llines=lv.type==='chicken'
+        ?["The chicken clucks contentedly.","It pecks at the ground near your feet.","Clem tends these birds with great care."]
+        :["The cow regards you with calm brown eyes.","It is well-fed and healthy.","Clem says she gives the best milk in the valley."];
+      openDlg({speaker:lname,lines:llines});
+      return;
+    }
+  }
+  // Signs — open on E press
+  var sg=nearSign();
+  // Harvestable crops — E near a grown crop tile harvests a turnip
+  if(!journalOpen&&!dlg){
+    for(var ci=0;ci<CROP_TILES.length;ci++){
+      var ct=CROP_TILES[ci];
+      if(!ct.grown) continue;
+      var cwx=ct.col*TILE+8, cwy=ct.row*TILE+8;
+      if(Math.hypot(player.x+8-cwx,player.y+8-cwy)<28){
+        ct.grown=false;
+        ct.timer=1800; // regrow after 30 seconds
+        addItem('turnip',1);
+        checkQuestProgress();
+        cooldown=20;
+        return;
+      }
+    }
+  }
+  if(sg){
+    $signSpeak.textContent=sg.lines[0];
+    $signText.innerHTML=sg.lines.slice(1).join('<br>');
+    $signWrap.style.display='block';
+    signTooltipText=sg.lines[0];
+    cooldown=20;
+    return;
+  }
+  // House door entry
+  var door=nearDoor();
+  if(door&&!door.isCottage){
+    openDlg({speaker:door.label, lines:door.lines});
+    return;
+  }
+  // Sleep (player cottage)
+  if(nearCottage()){
+    sleeping=true;
+    stepDone('q_welcome',3);
+    checkQuestProgress();
+    health=healthMax;stamina=staminaMax;
+    updateHUD();
+    openDlg({speaker:'Sleep',lines:[
+      'You rest your head in the cottage...',
+      'The valley sounds fade to a gentle hush.',
+      'A new day dawns in Dewdrop Valley.'
+    ]});
+  }
+}
+
+// ══════════════════════════════════════════════
+//  DAY CYCLE
+// ══════════════════════════════════════════════
+function advanceDay(){
+  day++;dayTick=0;timeOfDay='Morning';
+  for(var n=0;n<NPCS.length;n++)NPCS[n].spokenToday=false;
+  updateHUD();notify('Day '+day+' — a fresh morning.');
+}
+
+// ══════════════════════════════════════════════
+//  PICKUP DETECTION
+// ══════════════════════════════════════════════
+function checkPickups(){
+  for(var i=0;i<worldItems.length;i++){
+    var wi=worldItems[i];
+    if(wi.picked)continue;
+    if(Math.hypot(player.x+8-wi.x,player.y+8-wi.y)<32){
+      wi.picked=true;
+      addItem(wi.id);
+    }
+  }
+  // Check lake pebble quest step
+  if(questActive('q_ruins')&&(INV.lakePebble||0)>=2&&QUESTS.q_ruins.steps[1].done){
+    stepDone('q_ruins',2);
+  }
+
+  // ── Livestock AI ──
+  for(var li=0;li<LIVESTOCK.length;li++){
+    var lv=LIVESTOCK[li];
+    lv.timer--;
+    if(lv.timer<=0){
+      // Pick new random wander direction within farm bounds
+      var angle=Math.random()*Math.PI*2;
+      var spd=lv.type==='chicken'?0.4:0.25;
+      lv.dx=Math.cos(angle)*spd;
+      lv.dy=Math.sin(angle)*spd;
+      lv.timer=60+Math.floor(Math.random()*120);
+    }
+    var lnx=lv.x+lv.dx, lny=lv.y+lv.dy;
+    var lt=tileAt(lnx+8,lny+8);
+    // Keep within farm tiles
+    if((lt===17||lt===18||lt===1)&&lnx>tp(44)&&lnx<tp(72)&&lny>tp(18)&&lny<tp(40)){
+      lv.x=lnx;lv.y=lny;
+    } else {
+      lv.dx=-lv.dx;lv.dy=-lv.dy;
+      lv.timer=20;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+//  DRAW TILE
+// ══════════════════════════════════════════════
+function drawTile(col,row,ox,oy){
+  var sx=col*TILE-ox,sy=row*TILE-oy;
+  var t=MAP[row][col];
+  var base;
+  if(t===11||t===15)base=P.grassD;
+  else if(t===25)base=P.grassM;
+  else if(t===5||t===22)base=(animTick%40<20)?P.water:P.waterL;
+  else if(t===12)base=P.mountain;
+  else if(t===13)base=P.snow;
+  else if(t===14)base=P.sand;
+  else if(t===17)base=P.farmSoil;
+  else if([1,4,6,3,7,8,10,19,20,21,24].indexOf(t)!==-1)base=P.path;
+  else base=P.grass;
+  ctx.fillStyle=base;ctx.fillRect(sx,sy,TILE,TILE);
+
+  if(t===2){ctx.fillStyle=P.trunk;ctx.fillRect(sx+5,sy+9,6,7);ctx.fillStyle=P.tree;ctx.fillRect(sx+1,sy,14,12);ctx.fillStyle=P.treeL;ctx.fillRect(sx+3,sy+2,10,8);}
+  if(t===15){ctx.fillStyle=P.trunk;ctx.fillRect(sx+6,sy+11,4,5);ctx.fillStyle=P.pine;ctx.fillRect(sx+4,sy+2,8,10);ctx.fillStyle=P.pineD;ctx.fillRect(sx+5,sy+1,6,8);ctx.fillStyle='#3a7a3a';ctx.fillRect(sx+3,sy+5,10,6);}
+  if(t===12){ctx.fillStyle=P.mountainL;ctx.fillRect(sx,sy,TILE,8);ctx.fillStyle=P.mountain;ctx.fillRect(sx,sy+8,TILE,8);ctx.fillStyle='#6a6a6a';ctx.fillRect(sx+2,sy+4,3,6);ctx.fillRect(sx+11,sy+6,3,4);}
+  if(t===13){ctx.fillStyle=P.snow;ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#c8c8d8';ctx.fillRect(sx+2,sy+8,12,8);ctx.fillStyle='#e0e0f0';ctx.fillRect(sx+4,sy+2,8,8);}
+  if(t===24){ctx.fillStyle='#b09878';ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle='#c8b090';ctx.fillRect(sx+2,sy+2,12,12);}
+  if(t===3){ctx.fillStyle=P.wallA;ctx.fillRect(sx,sy+5,TILE,11);ctx.fillStyle=P.roofA;ctx.fillRect(sx,sy,TILE,7);ctx.fillStyle=P.roofA2;ctx.fillRect(sx+1,sy+1,14,5);ctx.fillStyle=P.win;ctx.fillRect(sx+2,sy+7,4,4);ctx.fillStyle=P.door;ctx.fillRect(sx+10,sy+9,4,7);}
+  if(t===7){ctx.fillStyle=P.wallB;ctx.fillRect(sx,sy+5,TILE,11);ctx.fillStyle=P.roofB;ctx.fillRect(sx,sy,TILE,7);ctx.fillStyle=P.roofB2;ctx.fillRect(sx+1,sy+1,14,5);ctx.fillStyle=P.win;ctx.fillRect(sx+2,sy+7,4,4);ctx.fillStyle=P.door;ctx.fillRect(sx+10,sy+9,4,7);}
+  if(t===8){ctx.fillStyle=P.wallP;ctx.fillRect(sx,sy+5,TILE,11);ctx.fillStyle=P.roofP;ctx.fillRect(sx,sy,TILE,7);ctx.fillStyle=P.roofP2;ctx.fillRect(sx+1,sy+1,14,5);ctx.fillStyle=P.win;ctx.fillRect(sx+2,sy+7,4,4);ctx.fillStyle=P.door;ctx.fillRect(sx+10,sy+9,4,7);}
+  if(t===20){ctx.fillStyle=P.wallC;ctx.fillRect(sx,sy+5,TILE,11);ctx.fillStyle=P.roofC;ctx.fillRect(sx,sy,TILE,7);ctx.fillStyle=P.roofC2;ctx.fillRect(sx+1,sy+1,14,5);ctx.fillStyle=P.win;ctx.fillRect(sx+2,sy+7,4,4);ctx.fillStyle=P.door;ctx.fillRect(sx+10,sy+9,4,7);}
+  if(t===21){ctx.fillStyle=P.wallL;ctx.fillRect(sx+3,sy+2,10,14);ctx.fillStyle=P.roofL;ctx.fillRect(sx+2,sy,12,4);ctx.fillStyle=P.roofL2;ctx.fillRect(sx+4,sy+1,8,3);ctx.fillStyle='#ffe87a';ctx.fillRect(sx+5,sy+2,6,2);ctx.fillStyle=P.win;ctx.fillRect(sx+5,sy+6,3,3);ctx.fillStyle=P.door;ctx.fillRect(sx+6,sy+12,4,4);}
+  if(t===4){ctx.fillStyle=P.well;ctx.fillRect(sx+3,sy+6,10,10);ctx.fillStyle='#5a3a1a';ctx.fillRect(sx+2,sy+5,12,2);ctx.fillStyle='#8a6a4a';ctx.fillRect(sx+2,sy+2,3,5);ctx.fillRect(sx+11,sy+2,3,5);ctx.fillStyle='#5a3a1a';ctx.fillRect(sx+1,sy+1,14,2);ctx.fillStyle=P.waterL;ctx.fillRect(sx+4,sy+8,8,6);}
+  if((t===5||t===22)&&animTick%60<12){ctx.fillStyle='rgba(154,216,248,0.35)';ctx.fillRect(sx+(col*7)%10,sy+4,4,2);}
+  if(t===6){ctx.fillStyle=P.fence;ctx.fillRect(sx+1,sy+4,14,3);ctx.fillRect(sx+0,sy+2,2,11);ctx.fillRect(sx+6,sy+2,3,11);ctx.fillRect(sx+14,sy+2,2,11);}
+  if(t===9||t===23){var fcs=[P.fl1,P.fl2,P.fl3,P.fl4];var fc=fcs[(col+row)%4];var bob=(Math.sin((animTick+col*17+row*31)*0.07)*1.5)|0;ctx.fillStyle='#5a8a3a';ctx.fillRect(sx+7,sy+8+bob,2,8);ctx.fillStyle=fc;ctx.fillRect(sx+5,sy+4+bob,6,5);ctx.fillStyle='rgba(255,255,255,.5)';ctx.fillRect(sx+7,sy+5+bob,2,2);}
+  if(t===10){ctx.fillStyle=P.sign;ctx.fillRect(sx+2,sy+5,12,8);ctx.fillStyle='#6a4a2a';ctx.fillRect(sx+7,sy+13,2,3);ctx.fillStyle='#e8d0a8';ctx.fillRect(sx+3,sy+6,10,6);ctx.fillStyle='#4a3a2a';ctx.fillRect(sx+4,sy+7,2,1);ctx.fillRect(sx+7,sy+7,2,1);ctx.fillRect(sx+10,sy+7,2,1);}
+  if(t===16){ctx.fillStyle=P.ruin;ctx.fillRect(sx,sy,TILE,TILE);ctx.fillStyle=P.ruinD;ctx.fillRect(sx,sy,TILE,3);ctx.fillRect(sx,sy,3,TILE);ctx.fillStyle='#5a4a3a';ctx.fillRect(sx+4,sy+4,3,3);ctx.fillRect(sx+10,sy+8,3,3);}
+  if(t===17){ctx.fillStyle='#6a4030';ctx.fillRect(sx+1,sy+6,14,2);ctx.fillRect(sx+1,sy+12,14,2);}
+  if(t===18){ctx.fillStyle=P.crop;var h2=(Math.sin((animTick+col*11)*0.05)*1)|0;ctx.fillRect(sx+2,sy+4+h2,3,8);ctx.fillRect(sx+7,sy+3+h2,3,9);ctx.fillRect(sx+12,sy+4+h2,3,8);ctx.fillStyle='#70a820';ctx.fillRect(sx+3,sy+2+h2,2,4);ctx.fillRect(sx+8,sy+1+h2,2,4);ctx.fillRect(sx+13,sy+2+h2,2,4);}
+  if(t===19){ctx.fillStyle=P.bridge;ctx.fillRect(sx,sy+4,TILE,8);ctx.fillStyle='#806040';ctx.fillRect(sx,sy+4,TILE,2);ctx.fillRect(sx,sy+10,TILE,2);ctx.fillStyle='#c0a060';ctx.fillRect(sx+2,sy+6,2,4);ctx.fillRect(sx+12,sy+6,2,4);}
+  if(t===14&&(col+row)%5===0){ctx.fillStyle='#c0b080';ctx.fillRect(sx+4,sy+4,3,3);}
+}
+
+// ══════════════════════════════════════════════
+//  DRAW WORLD ITEMS  (animated glow)
+// ══════════════════════════════════════════════
+function drawWorldItems(ox,oy){
+  var glow=(Math.sin(animTick*0.07)*0.4+0.6);
+  for(var i=0;i<worldItems.length;i++){
+    var wi=worldItems[i];
+    if(wi.picked)continue;
+    var sx=wi.x-ox,sy=wi.y-oy;
+    if(sx<-20||sx>CW+20||sy<-20||sy>CH+20)continue;
+    // glow halo
+    ctx.fillStyle='rgba(255,230,100,'+( glow*0.25)+')';
+    ctx.fillRect(sx-4,sy-4,24,24);
+    // item sprite (simple coloured square for pixel art)
+    var col2='#f0d060';
+    if(wi.id==='cloudberry')col2='#e04060';
+    else if(wi.id==='driftwood')col2='#a07840';
+    else if(wi.id==='lakePebble')col2='#90a0c0';
+    else if(wi.id==='runeSketch')col2='#d0c080';
+    else if(wi.id==='turnip')col2='#c060a0';
+    else if(wi.id==='lanternPart')col2='#ffa030';
+    else if(wi.id==='oldLetter')col2='#e0d090';
+    ctx.fillStyle=col2; ctx.fillRect(sx+3,sy+3,10,10);
+    ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.fillRect(sx+4,sy+4,4,4);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  DRAW CHARACTER
+// ══════════════════════════════════════════════
+// ── Boat (drawn under player on water) ──
+function drawBoat(wx,wy,facing,tick){
+  var bob=Math.round(Math.sin(tick*0.05)*1.5);
+  // Hull
+  ctx.fillStyle='#8a5a2a';
+  ctx.fillRect(wx-2,wy+10+bob,20,7);
+  ctx.fillRect(wx-1,wy+17+bob,18,2);
+  // Hull shading
+  ctx.fillStyle='#6a3a1a';
+  ctx.fillRect(wx-2,wy+15+bob,20,2);
+  // Rim
+  ctx.fillStyle='#b07a40';
+  ctx.fillRect(wx-3,wy+9+bob,22,2);
+  // Water line ripple
+  ctx.fillStyle='rgba(100,180,230,0.5)';
+  ctx.fillRect(wx-5,wy+18+bob,26,2);
+  // Oar based on facing direction
+  ctx.fillStyle='#a08050';
+  if(facing==='left'||facing==='right'){
+    var oarX=(facing==='left')?wx-6:wx+14;
+    var oarAngle=Math.sin(tick*0.08)*0.5;
+    ctx.save();
+    ctx.translate(oarX+2,wy+14+bob);
+    ctx.rotate(oarAngle);
+    ctx.fillRect(-1,-8,2,14);
+    ctx.fillRect(-3,4,6,3);
+    ctx.restore();
+  } else {
+    // up/down — oar on side
+    ctx.fillRect(wx+16,wy+10+bob,2,10);
+    ctx.fillRect(wx+14,wy+18+bob,6,3);
+  }
+}
+
+// ── Livestock drawing ──
+function drawChicken(wx,wy,frame,tick){
+  var bob=(tick%20<10)?0:-1;
+  // body
+  ctx.fillStyle='#f0e8d0';ctx.fillRect(wx+2,wy+4+bob,8,6);
+  // head
+  ctx.fillStyle='#f0e8d0';ctx.fillRect(wx+8,wy+1+bob,5,5);
+  // beak
+  ctx.fillStyle='#e8a830';ctx.fillRect(wx+13,wy+3+bob,3,2);
+  // wattle
+  ctx.fillStyle='#e04040';ctx.fillRect(wx+12,wy+2+bob,2,2);
+  // eye
+  ctx.fillStyle='#1a0e06';ctx.fillRect(wx+10,wy+2+bob,1,1);
+  // wing
+  ctx.fillStyle='#d8c8a0';ctx.fillRect(wx+3,wy+5+bob,5,4);
+  // feet
+  ctx.fillStyle='#e8a830';
+  ctx.fillRect(wx+3,wy+10,2,3);
+  ctx.fillRect(wx+7,wy+10,2,3);
+  ctx.fillRect(wx+2,wy+12,4,1);
+  ctx.fillRect(wx+6,wy+12,4,1);
+  // tail feathers
+  ctx.fillStyle='#d0c090';ctx.fillRect(wx,wy+3+bob,3,4);
+}
+function drawCow(wx,wy,frame,tick){
+  var bob=(tick%30<15)?0:-1;
+  // body
+  ctx.fillStyle='#e8d8c0';ctx.fillRect(wx,wy+5+bob,18,10);
+  // spots
+  ctx.fillStyle='#4a3020';ctx.fillRect(wx+3,wy+6+bob,4,4);ctx.fillRect(wx+12,wy+7+bob,3,5);
+  // head
+  ctx.fillStyle='#e8d8c0';ctx.fillRect(wx+15,wy+3+bob,8,8);
+  // snout
+  ctx.fillStyle='#d0a8a0';ctx.fillRect(wx+20,wy+7+bob,5,4);
+  // nostrils
+  ctx.fillStyle='#a07070';ctx.fillRect(wx+21,wy+8+bob,1,1);ctx.fillRect(wx+23,wy+8+bob,1,1);
+  // eye
+  ctx.fillStyle='#1a0e06';ctx.fillRect(wx+17,wy+4+bob,2,2);
+  // horns
+  ctx.fillStyle='#c0a060';ctx.fillRect(wx+16,wy+1+bob,2,3);ctx.fillRect(wx+20,wy+1+bob,2,3);
+  // ear
+  ctx.fillStyle='#d0b090';ctx.fillRect(wx+22,wy+3+bob,3,3);
+  // legs
+  ctx.fillStyle='#d0c0a8';
+  ctx.fillRect(wx+1,wy+14,3,5);ctx.fillRect(wx+5,wy+14,3,5);
+  ctx.fillRect(wx+10,wy+14,3,5);ctx.fillRect(wx+14,wy+14,3,5);
+  // hooves
+  ctx.fillStyle='#5a4030';
+  ctx.fillRect(wx+1,wy+18,3,2);ctx.fillRect(wx+5,wy+18,3,2);
+  ctx.fillRect(wx+10,wy+18,3,2);ctx.fillRect(wx+14,wy+18,3,2);
+  // tail
+  ctx.fillStyle='#c0a060';ctx.fillRect(wx-2,wy+5+bob,2,6);ctx.fillRect(wx-4,wy+9+bob,3,3);
+  // udder
+  ctx.fillStyle='#e0b0b0';ctx.fillRect(wx+6,wy+14+bob,6,3);
+}
+
+// ── Big Festival Lantern ──
+function drawBigLantern(wx,wy,lit,tick){
+  var bob=lit?Math.round(Math.sin(tick*0.06)*1.5):0;
+  // Pole
+  ctx.fillStyle='#5a3a1a';ctx.fillRect(wx+13,wy+6,4,38);
+  // Lantern body
+  var lx=wx+4,ly=wy+bob;
+  // Glow corona when lit
+  if(lit){
+    var gr=ctx.createRadialGradient(lx+15,ly+20,4,lx+15,ly+20,36);
+    var pulse=0.22+Math.sin(tick*0.07)*0.10;
+    gr.addColorStop(0,'rgba(255,200,60,'+pulse+')');
+    gr.addColorStop(1,'rgba(255,130,0,0)');
+    ctx.fillStyle=gr;ctx.fillRect(lx-20,ly-20,70,70);
+  }
+  // Lantern frame
+  ctx.fillStyle=lit?'#4a3010':'#3a3a3a';
+  ctx.fillRect(lx,ly+4,30,2);      // top bar
+  ctx.fillRect(lx,ly+28,30,2);     // bottom bar
+  ctx.fillRect(lx,ly+4,2,26);      // left side
+  ctx.fillRect(lx+28,ly+4,2,26);   // right side
+  ctx.fillRect(lx+10,ly+4,2,26);   // inner divider L
+  ctx.fillRect(lx+18,ly+4,2,26);   // inner divider R
+  // Paper panels
+  ctx.fillStyle=lit?'rgba(255,220,80,0.85)':'rgba(180,180,180,0.3)';
+  ctx.fillRect(lx+2,ly+6,8,22);
+  ctx.fillRect(lx+12,ly+6,6,22);
+  ctx.fillRect(lx+20,ly+6,8,22);
+  // Flame inside
+  if(lit){
+    ctx.fillStyle='rgba(255,160,20,0.9)';
+    ctx.beginPath();
+    var fx=lx+14,fy=ly+24;
+    var flicker=Math.sin(tick*0.13)*2;
+    ctx.moveTo(fx,fy+2);
+    ctx.quadraticCurveTo(fx-3+flicker,fy-2,fx,fy-8);
+    ctx.quadraticCurveTo(fx+3-flicker,fy-2,fx,fy+2);
+    ctx.fill();
+    ctx.fillStyle='rgba(255,240,160,0.95)';
+    ctx.fillRect(fx-1,fy-5,2,4);
+  }
+  // Cap and hook
+  ctx.fillStyle=lit?'#5a3010':'#3a3a3a';
+  ctx.fillRect(lx+2,ly+1,26,4);
+  ctx.fillRect(lx+12,ly-4,6,5);
+  // Tassel fringe at bottom
+  ctx.fillStyle=lit?'#c87a20':'#888888';
+  for(var f=0;f<5;f++){
+    var tx2=lx+4+f*6;
+    var tlen=4+Math.sin(tick*0.08+f)*2;
+    ctx.fillRect(tx2,ly+30,2,tlen);
+  }
+}
+
+function drawChar(wx,wy,skin,hair,shirt,frame){
+  var bob=(frame%2===0)?0:-1;
+  ctx.fillStyle=P.shadow;ctx.fillRect(wx+2,wy+14,12,3);
+  ctx.fillStyle='#4a3a2a';
+  if(frame%2===0){ctx.fillRect(wx+4,wy+10+bob,4,5);ctx.fillRect(wx+8,wy+10+bob,4,5);}
+  else{ctx.fillRect(wx+3,wy+11+bob,4,4);ctx.fillRect(wx+9,wy+10+bob,4,5);}
+  ctx.fillStyle=shirt;ctx.fillRect(wx+3,wy+5+bob,10,7);
+  ctx.fillStyle=skin;ctx.fillRect(wx+3,wy+bob,10,7);
+  ctx.fillStyle=hair;ctx.fillRect(wx+3,wy+bob,10,3);
+  ctx.fillStyle='#1a0e06';ctx.fillRect(wx+5,wy+3+bob,2,2);ctx.fillRect(wx+9,wy+3+bob,2,2);
+  ctx.fillStyle=shirt;
+  if(frame%2===0){ctx.fillRect(wx+1,wy+5+bob,3,5);ctx.fillRect(wx+12,wy+5+bob,3,5);}
+  else{ctx.fillRect(wx+0,wy+6+bob,3,5);ctx.fillRect(wx+13,wy+4+bob,3,5);}
+}
+
+// ══════════════════════════════════════════════
+//  DRAW OVERLAY + MINIMAP
+// ══════════════════════════════════════════════
+function drawOverlay(){
+  if(timeOfDay==='Evening'){ctx.fillStyle='rgba(255,110,30,0.17)';ctx.fillRect(0,0,CW,CH);}
+  else if(timeOfDay==='Night'){ctx.fillStyle='rgba(15,25,55,0.46)';ctx.fillRect(0,0,CW,CH);}
+  var g=ctx.createRadialGradient(320,240,100,320,240,390);
+  g.addColorStop(0,'transparent');g.addColorStop(1,'rgba(0,0,0,0.5)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
+  // Festival warm amber tint + floating lantern particles
+  if(festivalActive){
+    var alpha=0.06+Math.sin(animTick*0.04)*0.02;
+    ctx.fillStyle='rgba(255,160,40,'+alpha+')';
+    ctx.fillRect(0,0,CW,CH);
+    // Floating light motes
+    ctx.save();
+    for(var m=0;m<12;m++){
+      var mx=((animTick*0.4+m*53)%CW);
+      var my=((animTick*0.2+m*37+Math.sin(animTick*0.05+m)*20)%CH);
+      var ma=0.3+Math.sin(animTick*0.08+m)*0.2;
+      ctx.fillStyle='rgba(255,220,80,'+ma+')';
+      ctx.beginPath();ctx.arc(mx,my,1.5,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+function drawMinimap(ox,oy){
+  mmCtx.fillStyle='#1a120a';mmCtx.fillRect(0,0,100,75);
+  var sx=100/COLS,sy2=75/ROWS;
+  for(var r=0;r<ROWS;r+=2)for(var c=0;c<COLS;c+=2){
+    var t=MAP[r][c];
+    var col2;
+    if(t===11||t===15)col2='#3a6a3a';
+    else if(t===5||t===22)col2='#3a6aaa';
+    else if(t===12||t===13)col2='#8a8a9a';
+    else if(t===14)col2='#c8b870';
+    else if(t===17||t===18)col2='#6a5030';
+    else if(t===1||t===24||t===19)col2='#b09060';
+    else if([3,7,8,20,21].indexOf(t)!==-1)col2='#c87a5a';
+    else if(t===16)col2='#6a5a4a';
+    else if(t===25)col2='#5aaa5a';
+    else col2='#5a9a5a';
+    mmCtx.fillStyle=col2;
+    mmCtx.fillRect(Math.floor(c*sx),Math.floor(r*sy2),Math.ceil(sx*2),Math.ceil(sy2*2));
+  }
+  // item dots
+  for(var i=0;i<worldItems.length;i++){
+    var wi=worldItems[i];
+    if(!wi.picked){
+      mmCtx.fillStyle='#ffdd00';
+      mmCtx.fillRect(Math.floor(wi.x/TILE*sx)-1,Math.floor(wi.y/TILE*sy2)-1,3,3);
+    }
+  }
+  // viewport + player
+  var vx=Math.floor(ox/TILE*sx),vy=Math.floor(oy/TILE*sy2);
+  mmCtx.strokeStyle='rgba(255,255,255,0.35)';mmCtx.lineWidth=1;
+  mmCtx.strokeRect(vx,vy,Math.ceil(CW/TILE*sx),Math.ceil(CH/TILE*sy2));
+  mmCtx.fillStyle='#fff';
+  mmCtx.fillRect(Math.floor(player.x/TILE*sx)-1,Math.floor(player.y/TILE*sy2)-1,3,3);
+  // NPC dots
+  for(var n=0;n<NPCS.length;n++){
+    var npc=NPCS[n];
+    mmCtx.fillStyle='#ffaa44';
+    mmCtx.fillRect(Math.floor(npc.x/TILE*sx),Math.floor(npc.y/TILE*sy2),2,2);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  CAMERA
+// ══════════════════════════════════════════════
+function camera(){
+  var ox=Math.max(0,Math.min(player.x-CW/2+TILE/2,COLS*TILE-CW));
+  var oy=Math.max(0,Math.min(player.y-CH/2+TILE/2,ROWS*TILE-CH));
+  return{ox:ox,oy:oy};
+}
+
+// ══════════════════════════════════════════════
+//  UPDATE
+// ══════════════════════════════════════════════
+function update(){
+  animTick++;
+  if(cooldown>0)cooldown--;
+  if(notifTimer>0){notifTimer--;if(notifTimer===0)$notif.style.opacity='0';}
+  if(itemFlashTimer>0){itemFlashTimer--;if(itemFlashTimer===0)$itemFlash.style.opacity='0';}
+
+  if(journalPressed){journalPressed=false;if(journalOpen)closeJournal();else openJournal();}
+  if(interactPressed){interactPressed=false;tryInteract();}
+
+  if(!sleeping&&!journalOpen){
+    dayTick++;
+    var prog=dayTick/DAY_FRAMES;
+    if(prog<0.30)timeOfDay='Morning';
+    else if(prog<0.65)timeOfDay='Afternoon';
+    else if(prog<0.85)timeOfDay='Evening';
+    else timeOfDay='Night';
+    if(dayTick>=DAY_FRAMES)advanceDay();
+    updateHUD();
+    updateStaminaHUD();
+  }
+
+  if(!sleeping&&!journalOpen){
+    var dx=0,dy=0;
+    if(keys['ArrowUp']  ||keys['w']||keys['W']){dy=-SPEED;player.facing='up';}
+    if(keys['ArrowDown']||keys['s']||keys['S']){dy= SPEED;player.facing='down';}
+    if(keys['ArrowLeft']||keys['a']||keys['A']){dx=-SPEED;player.facing='left';}
+    if(keys['ArrowRight']||keys['d']||keys['D']){dx= SPEED;player.facing='right';}
+    // Terrain movement modifiers
+    var onWater=playerOnWater();
+    var onMtn=playerOnMountain();
+    var onPath=playerOnPath();
+    // Water: half speed
+    if(onWater){dx=Math.round(dx*0.45);dy=Math.round(dy*0.45);}
+    // Mountain (non-path): slow + drain stamina; lose heart at 0
+    if(onMtn&&!onPath){
+      var exhausted=(stamina<=0);
+      dx=Math.round(dx*0.5);dy=Math.round(dy*0.5);
+      if(dx!==0||dy!==0){
+        stamina=Math.max(0,stamina-0.6);
+        // When stamina just hit 0 and player keeps moving, drain a heart
+        if(stamina===0&&exhausted&&health>0&&(dx!==0||dy!==0)){
+          // throttle: only lose heart every 180 frames (~3 sec) of continued exhausted climbing
+          player._exhaustTimer++;
+          if(player._exhaustTimer>=180){
+            player._exhaustTimer=0;
+            health=Math.max(0,health-1);
+            hurtTimer=40;
+            notify('&#9825; Exhausted! Rest or descend to recover hearts.');
+            updateHUD();
+            if(health<=0){
+              // Collapse: teleport back to cottage, restore 1 heart
+              player.x=tp(20);player.y=tp(24);
+              health=1;stamina=staminaMax;
+              hurtTimer=80;
+              notify('&#128128; Collapsed from exhaustion! Woke up at home.');
+              updateHUD();
+            }
+          }
+        } else if(stamina>0){
+          player._exhaustTimer=0;
+        }
+      } else {
+        player._exhaustTimer=0;
+      }
+    } else {
+      player._exhaustTimer=0;
+    }
+    // Mountain path (tile 24): slight slow but stamina recovers
+    if(onPath){
+      dx=Math.round(dx*0.75);dy=Math.round(dy*0.75);
+      stamina=Math.min(staminaMax,stamina+0.3);
+    }
+    // Flat ground: stamina recovers
+    if(!onWater&&!onMtn&&!onPath) stamina=Math.min(staminaMax,stamina+1.2);
+    if(dx!==0||dy!==0){player.frameTimer++;if(player.frameTimer>8){player.frame++;player.frameTimer=0;}}
+    else{player.frame=0;player.frameTimer=0;}
+    var nx=Math.max(0,Math.min(player.x+dx,COLS*TILE-TILE));
+    var ny=Math.max(0,Math.min(player.y+dy,ROWS*TILE-TILE));
+    if(canMove(nx,player.y))player.x=nx;
+    if(canMove(player.x,ny))player.y=ny;
+  }
+  // Always check pickups every frame (not gated on movement)
+  if(!sleeping&&!journalOpen){ checkPickups(); checkSignProximity(); }
+  // Crop regrow
+  for(var ci=0;ci<CROP_TILES.length;ci++){
+    var ct=CROP_TILES[ci];
+    if(!ct.grown){ct.timer--;if(ct.timer<=0)ct.grown=true;}
+  }
+  if(signTooltipTimer>0) signTooltipTimer--;
+
+  // Hurt flash
+  if(hurtTimer>0){
+    hurtTimer--;
+    var alpha=((hurtTimer/40)*0.45).toFixed(2);
+    $hurtFlash.style.background='rgba(220,40,40,'+alpha+')';
+  } else {
+    $hurtFlash.style.background='rgba(220,40,40,0)';
+  }
+
+  for(var n=0;n<NPCS.length;n++){
+    var npc=NPCS[n];
+    if(!npc.path||npc.path.length===0) continue;
+    var pt=npc.path[npc.pathIdx];
+    var ddx=pt.x-npc.x, ddy=pt.y-npc.y;
+    var d=Math.hypot(ddx,ddy);
+    // Snap to waypoint when within one step — prevents oscillation
+    if(d<=npc.speed){
+      npc.x=pt.x; npc.y=pt.y;
+      npc.pathIdx=(npc.pathIdx+1)%npc.path.length;
+    } else {
+      npc.x+=(ddx/d)*npc.speed;
+      npc.y+=(ddy/d)*npc.speed;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+//  DRAW
+// ══════════════════════════════════════════════
+function draw(){
+  ctx.clearRect(0,0,CW,CH);
+  var cam=camera(),ox=cam.ox,oy=cam.oy;
+  var c0=Math.max(0,Math.floor(ox/TILE)-1),c1=Math.min(COLS,Math.ceil((ox+CW)/TILE)+1);
+  var r0=Math.max(0,Math.floor(oy/TILE)-1),r1=Math.min(ROWS,Math.ceil((oy+CH)/TILE)+1);
+  for(var row=r0;row<r1;row++)for(var col=c0;col<c1;col++)drawTile(col,row,ox,oy);
+
+  drawWorldItems(ox,oy);
+
+  // ── Livestock ──
+  for(var li=0;li<LIVESTOCK.length;li++){
+    var lv=LIVESTOCK[li];
+    var lvsx=lv.x-ox, lvsy=lv.y-oy;
+    if(lvsx<-40||lvsx>CW+40||lvsy<-40||lvsy>CH+40) continue;
+    if(lv.type==='chicken') drawChicken(lvsx,lvsy,lv.frame,animTick+li*7);
+    else drawCow(lvsx,lvsy,lv.frame,animTick+li*11);
+    // Interaction prompt if close
+    if(!dlg&&Math.hypot(player.x+8-lv.x,player.y+8-lv.y)<tp(1.5)){
+      ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='10px Courier New';ctx.textAlign='center';
+      ctx.fillText('[E]',lvsx+8,lvsy-3);
+    }
+  }
+
+  // ── Harvestable crop sparkles ──
+  for(var ci=0;ci<CROP_TILES.length;ci++){
+    var ct=CROP_TILES[ci];
+    if(!ct.grown) continue;
+    var csx=ct.col*TILE-ox, csy=ct.row*TILE-oy;
+    if(csx<-20||csx>CW+20||csy<-20||csy>CH+20) continue;
+    // Glowing ready-to-harvest sparkle
+    if(animTick%40<20){
+      ctx.fillStyle='rgba(144,200,64,0.7)';
+      ctx.fillRect(csx+6,csy+1,3,3);
+      ctx.fillRect(csx+7,csy,1,5);
+    }
+  }
+
+  // ── Big Festival Lantern in village square ──
+  var lnx=tp(21)-ox, lny=tp(19)-oy; // centre of town square
+  if(lnx>-80&&lnx<CW+80&&lny>-80&&lny<CH+80){
+    drawBigLantern(lnx,lny,festivalActive,animTick);
+    // Label
+    if(!festivalActive){
+      ctx.fillStyle='rgba(150,130,100,0.5)';ctx.font='7px Courier New';ctx.textAlign='center';
+      ctx.fillText('The Great Lantern',lnx+15,lny-2);
+    } else {
+      ctx.fillStyle='rgba(255,220,100,0.9)';ctx.font='8px Courier New';ctx.textAlign='center';
+      ctx.fillText('\u2600 Lantern Night!',lnx+15,lny-4);
+    }
+  }
+
+  for(var n=0;n<NPCS.length;n++){
+    var npc=NPCS[n],sx=npc.x-ox,sy=npc.y-oy;
+    if(sx<-32||sx>CW+32||sy<-32||sy>CH+32)continue;
+    var dist=Math.hypot(player.x-npc.x,player.y-npc.y);
+    if(dist<tp(2)&&!dlg&&!journalOpen){
+      ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='10px Courier New';ctx.textAlign='center';
+      ctx.fillText('[E]',sx+8,sy-5);
+    }
+    var npcBob=0;
+    if(festivalActive){
+      // Each NPC jumps at a slightly different phase so they don't all move together
+      var phase=n*1.3;
+      npcBob=Math.round(Math.abs(Math.sin(animTick*0.12+phase))*-7);
+      // Confetti dot above each NPC
+      var confColors=['#ff6060','#60ff90','#6090ff','#ffdd40','#ff80c0'];
+      ctx.fillStyle=confColors[(n+Math.floor(animTick/8))%confColors.length];
+      ctx.fillRect(sx+8+Math.round(Math.sin(animTick*0.2+n)*5),sy+npcBob-14,3,3);
+    }
+    drawChar(sx,sy+npcBob,npc.color,npc.hair,npc.shirt,animTick);
+    var nameColor=festivalActive?'rgba(255,230,120,0.95)':'rgba(232,213,163,0.6)';
+    ctx.fillStyle=nameColor;ctx.font='8px Courier New';ctx.textAlign='center';
+    ctx.fillText(npc.name,sx+8,sy+npcBob-9);
+    if(festivalActive&&Math.sin(animTick*0.07+n)>0.92){
+      ctx.fillStyle='rgba(255,230,100,0.9)';ctx.font='8px Courier New';ctx.textAlign='center';
+      var cheers=['Hooray!','Yay!','\u2665','Yeah!','\u2605'];
+      ctx.fillText(cheers[n%cheers.length],sx+8,sy+npcBob-22);
+    }
+  }
+
+  // Door entry prompts for all houses
+  if(!dlg&&!sleeping&&!journalOpen){
+    var activeDoor=nearDoor();
+    if(activeDoor){
+      var dsx=activeDoor.col*TILE-ox, dsy=activeDoor.row*TILE-oy;
+      var lbl=activeDoor.isCottage?'[E] Enter / Sleep':'[E] Enter';
+      ctx.fillStyle='#8ab89a';ctx.font='10px Courier New';ctx.textAlign='center';
+      ctx.fillText(lbl, dsx+8, dsy-5);
+    }
+    // Sign [E] prompt
+    var nearSg=nearSign();
+    if(nearSg&&$signWrap.style.display!=='block'){
+      var sgnx=nearSg.col*TILE-ox, sgny=nearSg.row*TILE-oy;
+      ctx.fillStyle='#8ab89a';ctx.font='10px Courier New';ctx.textAlign='center';
+      ctx.fillText('[E] Read',sgnx+8,sgny-5);
+    }
+  }
+  // Draw boat under player when on water
+  if(playerOnWater()){
+    drawBoat(player.x-ox,player.y-oy,player.facing,animTick);
+  }
+  drawChar(player.x-ox,player.y-oy,P.player,P.pHair,P.pShirt,player.frame);
+
+  drawOverlay();
+  drawMinimap(ox,oy);
+  $hudLoc.textContent=locationName();
+}
+
+// ══════════════════════════════════════════════
+//  AUDIO  (Web Audio API — generated chiptune ambience)
+// ══════════════════════════════════════════════
+var audioCtx=null, gainNode=null, muteGain=null;
+var musicNodes=[];
+// (volLevel, muted, escOpen, playerName moved to state block)
+
+function initAudio(){
+  try{
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    gainNode=audioCtx.createGain();
+    muteGain=audioCtx.createGain();
+    gainNode.connect(muteGain);
+    muteGain.connect(audioCtx.destination);
+    gainNode.gain.value=volLevel;
+    muteGain.gain.value=1;
+    playAmbience();
+  }catch(e){console.log('Audio unavailable');}
+}
+
+function playAmbience(){
+  if(!audioCtx)return;
+  // Gentle looping chiptune: arpeggiated major pentatonic
+  var notes=[261.6,293.7,329.6,392.0,440.0,523.3,587.3,659.3];
+  var bpm=72, step=60/bpm;
+  var seq=[0,2,4,5,4,2,0,2, 4,5,7,5,4,2,4,0];
+  var now=audioCtx.currentTime+0.1;
+  var loop=function(offset){
+    seq.forEach(function(ni,i){
+      var osc=audioCtx.createOscillator();
+      var env=audioCtx.createGain();
+      osc.type='triangle';
+      osc.frequency.value=notes[ni%notes.length];
+      env.gain.setValueAtTime(0,now+offset+i*step);
+      env.gain.linearRampToValueAtTime(0.18,now+offset+i*step+0.04);
+      env.gain.linearRampToValueAtTime(0,now+offset+i*step+step*0.7);
+      osc.connect(env);env.connect(gainNode);
+      osc.start(now+offset+i*step);
+      osc.stop(now+offset+i*step+step);
+      musicNodes.push(osc);
+    });
+    // pad bass drone
+    var bass=audioCtx.createOscillator();
+    var bassGain=audioCtx.createGain();
+    bass.type='sine';bass.frequency.value=65.4;
+    bassGain.gain.value=0.06;
+    bass.connect(bassGain);bassGain.connect(gainNode);
+    bass.start(now+offset);bass.stop(now+offset+seq.length*step);
+    musicNodes.push(bass);
+  };
+  var totalDur=seq.length*step;
+  loop(0);loop(totalDur);
+  // keep scheduling
+  setTimeout(function(){
+    if(!audioCtx)return;
+    musicNodes=[];
+    loop(0);loop(totalDur);
+    scheduleLoop(totalDur);
+  },(totalDur*1000));
+}
+function scheduleLoop(dur){
+  setTimeout(function(){
+    if(!audioCtx)return;
+    musicNodes=[];
+    var notes=[261.6,293.7,329.6,392.0,440.0,523.3,587.3,659.3];
+    var bpm=72,step=60/bpm;
+    var seq=[0,2,4,5,4,2,0,2,4,5,7,5,4,2,4,0];
+    var now=audioCtx.currentTime+0.05;
+    seq.forEach(function(ni,i){
+      var osc=audioCtx.createOscillator();
+      var env=audioCtx.createGain();
+      osc.type='triangle';osc.frequency.value=notes[ni%notes.length];
+      env.gain.setValueAtTime(0,now+i*step);
+      env.gain.linearRampToValueAtTime(0.18,now+i*step+0.04);
+      env.gain.linearRampToValueAtTime(0,now+i*step+step*0.7);
+      osc.connect(env);env.connect(gainNode);
+      osc.start(now+i*step);osc.stop(now+i*step+step);
+      musicNodes.push(osc);
+    });
+    scheduleLoop(dur);
+  },dur*900);
+}
+
+function setVolume(v){
+  volLevel=v/100;
+  document.getElementById('vol-pct').textContent=v+'%';
+  if(gainNode&&!muted)gainNode.gain.value=volLevel;
+}
+function toggleMute(){
+  muted=!muted;
+  if(muteGain)muteGain.gain.value=muted?0:1;
+  var btn=document.getElementById('mute-btn');
+  btn.textContent=muted?'Unmute':'Mute';
+  btn.className=muted?'muted':'';
+}
+
+// ══════════════════════════════════════════════
+//  MENU FUNCTIONS
+// ══════════════════════════════════════════════
+function openEscMenu(){
+  if(!gameRunning)return;
+  escOpen=true;
+  gameRunning=false;
+  var el=document.getElementById('esc-menu');
+  el.style.display='flex';
+}
+function closeEscMenu(){
+  escOpen=false;
+  gameRunning=true;
+  document.getElementById('esc-menu').style.display='none';
+}
+
+function restartGame(){
+  closeEscMenu();
+  // Reset all state
+  day=1;timeOfDay='Morning';dayTick=0;animTick=0;
+  sleeping=false;dlg=null;journalOpen=false;
+  cooldown=0;notifTimer=0;itemFlashTimer=0;
+  stamina=staminaMax;health=healthMax;hurtTimer=0;player._exhaustTimer=0;
+  letterDelivered=false;
+  festivalActive=false;
+  if($endScreen)$endScreen.style.display='none';
+  // Reset livestock positions
+  LIVESTOCK[0].x=tp(50);LIVESTOCK[0].y=tp(21);
+  LIVESTOCK[1].x=tp(54);LIVESTOCK[1].y=tp(24);
+  LIVESTOCK[2].x=tp(58);LIVESTOCK[2].y=tp(22);
+  LIVESTOCK[3].x=tp(48);LIVESTOCK[3].y=tp(29);
+  LIVESTOCK[4].x=tp(56);LIVESTOCK[4].y=tp(31);
+  for(var li=0;li<LIVESTOCK.length;li++){LIVESTOCK[li].timer=0;LIVESTOCK[li].dx=0;LIVESTOCK[li].dy=0;}
+  signTooltipTimer=0;signTooltip=[];signTooltipText='';
+  if($signWrap)$signWrap.style.display='none';
+  player.x=tp(20);player.y=tp(24);
+  player.facing='down';player.frame=0;player.frameTimer=0;
+  for(var k in rel)rel[k]=0;
+  INV={};
+  spawnWorldItems();
+  buildCropTiles(); // re-randomise item positions on restart
+  NPCS.forEach(function(n){n.scriptIdx=0;n.spokenToday=false;});
+  for(var qid in QUESTS){
+    var q=QUESTS[qid];
+    q.state=(qid==='q_welcome')?'active':'locked';
+    q.steps.forEach(function(s){s.done=false;});
+    if(qid==='q_cloudberry') q.steps[0].text='Collect cloudberries on the mountain trail (0/3)';
+  }
+  // clear UI
+  document.getElementById('dlg-wrap').style.display='none';
+  document.getElementById('choice-wrap').style.display='none';
+  document.getElementById('quest-panel').style.display='none';
+  document.getElementById('notif').style.opacity='0';
+  document.getElementById('item-flash').style.opacity='0';
+  updateHUD();refreshJournal();
+  notify('New game started. Welcome back, '+playerName+'!');
+  gameRunning=true;
+}
+
+function goMainMenu(){
+  closeEscMenu();
+  gameRunning=false;
+  document.getElementById('game-wrap').style.display='none';
+  document.getElementById('dlg-wrap').style.display='none';
+  document.getElementById('choice-wrap').style.display='none';
+  document.getElementById('esc-menu').style.display='none';
+  document.getElementById('quest-panel').style.display='none';
+  document.getElementById('title-screen').style.display='flex';
+}
+
+// ══════════════════════════════════════════════
+//  LOOP & START
+// ══════════════════════════════════════════════
+// (loopStarted moved to state block)
+function loop(){update();draw();requestAnimationFrame(loop);}
+
+function beginGame(){
+  document.getElementById('title-screen').style.display='none';
+  document.getElementById('game-wrap').style.display='flex';
+  gameRunning=true;updateHUD();refreshJournal();
+  initAudio();
+  setTimeout(function(){
+    openDlg({speaker:'Journal \u2014 Day 1',lines:[
+      "Welcome, "+playerName+". You have arrived in Dewdrop Valley.",
+      "It is bigger than the letter described.",
+      "Press Q to open your journal and track quests.",
+      "Yellow glowing items on the map can be picked up by walking over them.",
+      "Press ESC or click MENU at any time to pause, restart, or return to the main menu.",
+      "Talk to everyone. There is a story here worth uncovering.",
+      "[ WASD/Arrows Move  |  E Talk/Interact  |  Q Journal  |  ESC Menu ]"
+    ]});
+  },300);
+  if(!loopStarted){loopStarted=true;loop();}
+}
+
+// ── Start button → show name prompt ──
+document.getElementById('start-btn').addEventListener('click',function(){
+  document.getElementById('name-prompt').style.display='flex';
+  setTimeout(function(){document.getElementById('name-input').focus();},50);
+});
+
+// ── Name confirm ──
+function confirmName(){
+  var val=document.getElementById('name-input').value.trim();
+  playerName=val||'Traveller';
+  document.getElementById('name-prompt').style.display='none';
+  beginGame();
+}
+document.getElementById('name-confirm').addEventListener('click',confirmName);
+document.getElementById('name-input').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){e.preventDefault();confirmName();}
+});
+
+// ── Wire all HTML buttons via addEventListener (no inline onclick needed) ──
+document.getElementById('hud-esc')      .addEventListener('click', openEscMenu);
+document.getElementById('close-quest')  .addEventListener('click', closeJournal);
+document.getElementById('tab-quests')   .addEventListener('click', function(){ showTab('quests'); });
+document.getElementById('tab-inventory').addEventListener('click', function(){ showTab('inventory'); });
+document.getElementById('vol-slider')   .addEventListener('input', function(){ setVolume(this.value); });
+document.getElementById('mute-btn')     .addEventListener('click', toggleMute);
+document.getElementById('btn-resume')   .addEventListener('click', closeEscMenu);
+document.getElementById('btn-restart')  .addEventListener('click', restartGame);
+document.getElementById('end-restart').addEventListener('click', function(){
+  $endScreen.style.display='none';
+  restartGame();
+});
+document.getElementById('end-close').addEventListener('click', function(){
+  $endScreen.style.display='none';
+});
+document.getElementById('btn-mainmenu') .addEventListener('click', goMainMenu);
+
+})();
+</script>
+</body>
+</html>
