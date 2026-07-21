@@ -8,7 +8,8 @@
 body{
   background:#1a120a;display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  height:100vh;overflow:hidden;font-family:'Courier New',monospace;
+  min-height:100vh;overflow:hidden;margin:0;
+  font-family:'Courier New',monospace;
 }
 
 /* ── Title ── */
@@ -21,10 +22,10 @@ body{
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* ── Game ── */
-#game-wrap{display:none;flex-direction:column;align-items:center;gap:4px;}
+#game-wrap{display:none;flex-direction:column;align-items:center;gap:4px;width:100%;max-width:640px;}
 
 /* ── HUD ── */
-#hud{width:640px;display:flex;justify-content:space-between;align-items:center;padding:2px 8px;font-size:11px;color:#c8a97a;}
+#hud{width:100%;max-width:640px;display:flex;justify-content:space-between;align-items:center;padding:2px 8px;font-size:11px;color:#c8a97a;}
 #hud-day{color:#8ab89a;font-weight:bold;}
 #stamina-wrap{display:none;align-items:center;gap:5px;font-size:10px;color:#aac8aa;}
 #stamina-bar-bg{width:60px;height:6px;background:#1a2a1a;border:1px solid #3a5a3a;border-radius:2px;}
@@ -33,7 +34,7 @@ body{
 #hud-heart{color:#e08080;letter-spacing:1px;}
 
 /* ── Canvas ── */
-canvas{display:block;border:3px solid #3a2810;image-rendering:pixelated;box-shadow:0 0 40px #0006,0 0 80px #a8d8b910;}
+canvas{display:block;image-rendering:pixelated;}
 
 /* ── Minimap ── */
 #minimap{position:absolute;top:6px;right:6px;width:100px;height:75px;border:2px solid #4a3a2a;background:#1a120a;image-rendering:pixelated;}
@@ -2384,5 +2385,9 @@ document.getElementById('btn-mainmenu') .addEventListener('click', goMainMenu);
 
 })();
 </script>
+<div style="margin-top: 24px; text-align: center;">
+  <canvas id="game" width="800" height="600"></canvas>
+</div>
+<script type="module" src="./src/main.ts"></script>
 </body>
 </html>

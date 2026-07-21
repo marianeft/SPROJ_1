@@ -1,0 +1,17 @@
+{
+  "name": "pixi-starter",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "start": "vite",
+    "build": "tsc && vite build",
+    "serve": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vite": "8.1.5"
+  },
+  "dependencies": {
+    "pixi.js": "^8.0.0"
+  }
+}
