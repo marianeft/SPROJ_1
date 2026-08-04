@@ -20,6 +20,21 @@ import * as THREE from 'three';
 // ── DOM refs ────────────────────────────────────────────────────────────────
 const canvas   = document.getElementById('canvas') as HTMLCanvasElement | null;
 const gameWrap = document.getElementById('game-wrap') as HTMLDivElement | null;
+const loadingScreen = document.getElementById('loading-screen') as HTMLDivElement | null;
+
+function showLoadingScreen() {
+  if (!loadingScreen) return;
+  loadingScreen.style.display = 'flex';
+  loadingScreen.classList.remove('fade-out');
+}
+
+function hideLoadingScreen() {
+  if (!loadingScreen) return;
+  loadingScreen.classList.add('fade-out');
+  setTimeout(() => {
+    if (loadingScreen.parentElement) loadingScreen.parentElement.removeChild(loadingScreen);
+  }, 500);
+}
 
 // Hide legacy 2D canvas — Three.js owns rendering from here on.
 if (canvas) canvas.style.display = 'none';
@@ -368,6 +383,12 @@ function render3D() {
 const initialMap = (window as any).MAP as number[][] | undefined;
 if (initialMap?.length) {
   build3DWorld(initialMap);
+  requestAnimationFrame(() => {
+    render3D();
+    hideLoadingScreen();
+  });
+} else {
+  requestAnimationFrame(hideLoadingScreen);
 }
 
 // Wrap beginGame so that the 3D world is rebuilt cleanly on every new game
